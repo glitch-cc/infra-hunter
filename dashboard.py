@@ -142,6 +142,12 @@ TEMPLATE = '''
     <div class="container">
         <h1>⚡ Infrastructure Hunter</h1>
         
+        <nav style="display:flex;gap:20px;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #30363d;">
+            <a href="/" style="color:#58a6ff;font-weight:600;">Dashboard</a>
+            <a href="/signatures" style="color:#8b949e;">Signatures</a>
+            <a href="/signatures/create" style="color:#8b949e;">+ Create Signature</a>
+        </nav>
+        
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value">{{ stats.patterns }}</div>
