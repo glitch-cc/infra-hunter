@@ -1,0 +1,43 @@
+signature:
+  id: cobalt-strike-jarm-default
+  name: Cobalt Strike - Jarm Default
+  version: 1.0.0
+  category: c2-frameworks
+  description: Commercial adversary simulation tool, widely abused by APTs and ransomware
+    operators. Default JARM, can match other Java applications
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Default
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2
+      weight: 60
+      note: Default JARM, can match other Java applications
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - APT29
+    - APT41
+    - FIN7
+    - Conti
+    - Ryuk
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2"
+    shodan: ssl.jarm:"07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

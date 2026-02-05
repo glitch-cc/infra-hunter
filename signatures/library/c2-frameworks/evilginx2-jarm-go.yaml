@@ -1,0 +1,40 @@
+signature:
+  id: evilginx2-jarm-go
+  name: EvilGinx2 - Jarm Go
+  version: 1.0.0
+  category: c2-frameworks
+  description: Man-in-the-middle attack framework for phishing credentials and session
+    cookies. Go 1.10.4 - fairly unique
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Go
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6
+      weight: 80
+      note: Go 1.10.4 - fairly unique
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Phishing campaigns
+    - APTs for credential theft
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
+    shodan: ssl.jarm:"20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

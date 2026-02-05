@@ -1,0 +1,38 @@
+signature:
+  id: poshc2-jarm-python3
+  name: PoshC2 - Jarm Python3
+  version: 1.0.0
+  category: c2-frameworks
+  description: PowerShell-based C2 framework. Python3 http.server
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Python3
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 2ad2ad0002ad2ad22c42d42d000000faabb8fd156aa8b4d8a37853e1063261
+      weight: 60
+      note: Python3 http.server
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Red teams
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"2ad2ad0002ad2ad22c42d42d000000faabb8fd156aa8b4d8a37853e1063261"
+    shodan: ssl.jarm:"2ad2ad0002ad2ad22c42d42d000000faabb8fd156aa8b4d8a37853e1063261"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

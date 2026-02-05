@@ -1,0 +1,40 @@
+signature:
+  id: sliver-jarm-https
+  name: Sliver - Jarm Https
+  version: 1.0.0
+  category: c2-frameworks
+  description: Open-source cross-platform C2 framework by BishopFox. HTTPS listener,
+    can be randomized in newer versions
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Https
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 3fd21b20d00000021c43d21b21b43d41226dd5dfc615dd4a96265559485910
+      weight: 60
+      note: HTTPS listener, can be randomized in newer versions
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Various APTs
+    - Ransomware operators migrating from CS
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"3fd21b20d00000021c43d21b21b43d41226dd5dfc615dd4a96265559485910"
+    shodan: ssl.jarm:"3fd21b20d00000021c43d21b21b43d41226dd5dfc615dd4a96265559485910"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

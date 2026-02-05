@@ -1,0 +1,39 @@
+signature:
+  id: covenant-jarm-aspnet
+  name: Covenant - Jarm Aspnet
+  version: 1.0.0
+  category: c2-frameworks
+  description: .NET C2 framework with collaborative red team features. ASP.NET Core
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Aspnet
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 21d14d00000000021c21d14d21d21d1ee8ae98bf3ef941e91529a93ac62b8b
+      weight: 60
+      note: ASP.NET Core
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Red teams
+    - Some threat actors
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"21d14d00000000021c21d14d21d21d1ee8ae98bf3ef941e91529a93ac62b8b"
+    shodan: ssl.jarm:"21d14d00000000021c21d14d21d21d1ee8ae98bf3ef941e91529a93ac62b8b"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

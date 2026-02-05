@@ -1,0 +1,92 @@
+# Signature Schema Reference
+# 
+# Each signature YAML file follows this structure.
+# Files are stored in signatures/library/<category>/<name>.yaml
+
+signature:
+  # Required: Unique identifier (lowercase, hyphens)
+  id: cobalt-strike-default-cert
+  
+  # Required: Human-readable name
+  name: Cobalt Strike Default Certificate
+  
+  # Required: Version (semver)
+  version: "1.0.0"
+  
+  # Required: Category for organization
+  category: c2-frameworks  # c2-frameworks, apt-infrastructure, ransomware, phishing, generic
+  
+  # Optional: Author/source
+  author: DFIR Community
+  
+  # Required: Description of what this detects
+  description: |
+    Detects Cobalt Strike servers using the default self-signed SSL certificate.
+    This is a high-confidence indicator as it requires no configuration by operators.
+  
+  # Optional: Attribution to threat actors
+  attribution:
+    actors:
+      - APT29
+      - APT41
+      - FIN7
+      - Conti
+    confidence: low  # Attribution confidence (not detection confidence)
+    note: "C2 tool used by many actors - attribution requires additional context"
+  
+  # Required: Detection logic
+  logic:
+    # Match type: any (OR), all (AND)
+    match: any
+    
+    # Conditions to check
+    conditions:
+      - name: cert_sha256
+        type: cert_fingerprint
+        field: services.tls.certificates.leaf_data.fingerprint
+        operator: equals
+        value: "87f2085c32b6a2cc709b365f55873e207a9caa10bffecf2fd16d3cf9d94d390c"
+        weight: 100  # Confidence weight (0-100)
+        
+      - name: cert_serial
+        type: cert_field
+        field: services.tls.certificates.leaf_data.serial_number
+        operator: equals
+        value: "146473198"
+        weight: 80
+        
+      - name: jarm_default
+        type: jarm
+        field: services.jarm.fingerprint
+        operator: equals
+        value: "07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2"
+        weight: 60
+        note: "Can match other Java applications"
+  
+  # Generated query (auto-built from conditions)
+  queries:
+    censys: "services.tls.certificates.leaf_data.fingerprint:87f2085c32b6a2cc709b365f55873e207a9caa10bffecf2fd16d3cf9d94d390c"
+    shodan: 'ssl.cert.fingerprint:"87f2085c32b6a2cc709b365f55873e207a9caa10bffecf2fd16d3cf9d94d390c"'
+  
+  # Metadata
+  metadata:
+    confidence: high  # Overall detection confidence: high, medium, low
+    severity: critical  # Severity if detected: critical, high, medium, low, info
+    false_positive_rate: low  # Expected FP rate: high, medium, low
+    last_verified: "2026-02-05"
+    
+  # References for research
+  references:
+    - url: https://thedfirreport.com/tag/cobalt-strike/
+      title: DFIR Report - Cobalt Strike
+    - url: https://engineering.salesforce.com/easily-identify-malicious-servers-on-the-internet-with-jarm
+      title: JARM Fingerprinting
+  
+  # Status
+  enabled: true
+  
+  # Changelog
+  changelog:
+    - version: "1.0.0"
+      date: "2026-02-05"
+      changes: "Initial signature"

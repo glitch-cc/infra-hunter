@@ -1,0 +1,39 @@
+signature:
+  id: sliver-jarm-mtls
+  name: Sliver - Jarm Mtls
+  version: 1.0.0
+  category: c2-frameworks
+  description: Open-source cross-platform C2 framework by BishopFox. mTLS listener
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Mtls
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 00000000000000000043d43d00043de2a97eabb398317329f027c66e4c1b01
+      weight: 60
+      note: mTLS listener
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Various APTs
+    - Ransomware operators migrating from CS
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"00000000000000000043d43d00043de2a97eabb398317329f027c66e4c1b01"
+    shodan: ssl.jarm:"00000000000000000043d43d00043de2a97eabb398317329f027c66e4c1b01"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

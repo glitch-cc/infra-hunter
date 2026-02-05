@@ -1,0 +1,38 @@
+signature:
+  id: merlin-jarm-go
+  name: Merlin - Jarm Go
+  version: 1.0.0
+  category: c2-frameworks
+  description: Go-based cross-platform post-exploitation HTTP/2 C2. Go 1.15.2 linux/amd64
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Go
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 29d21b20d29d29d21c41d21b21b41d494e0df9532e75299f15ba73156cee38
+      weight: 60
+      note: Go 1.15.2 linux/amd64
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Red teams
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"29d21b20d29d29d21c41d21b21b41d494e0df9532e75299f15ba73156cee38"
+    shodan: ssl.jarm:"29d21b20d29d29d21c41d21b21b41d494e0df9532e75299f15ba73156cee38"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

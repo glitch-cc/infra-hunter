@@ -1,0 +1,42 @@
+signature:
+  id: cobalt-strike-default-ssl-cert
+  name: Cobalt Strike - Default Ssl Cert
+  version: 1.0.0
+  category: c2-frameworks
+  description: Commercial adversary simulation tool, widely abused by APTs and ransomware
+    operators.
+  logic:
+    match: any
+    conditions:
+    - name: Default Ssl Cert
+      type: cert_fingerprint
+      field: services.tls.certificates.leaf_data.fingerprint
+      operator: equals
+      value: 87f2085c32b6a2cc709b365f55873e207a9caa10bffecf2fd16d3cf9d94d390c
+      weight: 80
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - APT29
+    - APT41
+    - FIN7
+    - Conti
+    - Ryuk
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.tls.certificates.leaf_data.fingerprint:"87f2085c32b6a2cc709b365f55873e207a9caa10bffecf2fd16d3cf9d94d390c"
+    shodan: ssl:"6ECE5ECE4192683D2D84E25B0BA7E04F9CB7EB7C"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

@@ -1,0 +1,39 @@
+signature:
+  id: deimos-jarm-go-websocket
+  name: DeimosC2 - Jarm Go Websocket
+  version: 1.0.0
+  category: c2-frameworks
+  description: Open-source Go-based C2 framework. Go with gorilla/websocket package
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Go Websocket
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 00000000000000000041d00000041d9535d5979f591ae8e547c5e5743e5b64
+      weight: 60
+      note: Go with gorilla/websocket package
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Red teams
+    - Used by Lazarus Group
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"00000000000000000041d00000041d9535d5979f591ae8e547c5e5743e5b64"
+    shodan: ssl.jarm:"00000000000000000041d00000041d9535d5979f591ae8e547c5e5743e5b64"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

@@ -1,0 +1,39 @@
+signature:
+  id: sliver-http-404-nocache
+  name: Sliver - Http 404 Nocache
+  version: 1.0.0
+  category: c2-frameworks
+  description: Open-source cross-platform C2 framework by BishopFox.
+  logic:
+    match: any
+    conditions:
+    - name: Http 404 Nocache
+      type: http_header
+      field: services.http.response.status_code
+      operator: equals
+      value: '404'
+      weight: 60
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Various APTs
+    - Ransomware operators migrating from CS
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.http.response.status_code:"404"
+    shodan: '"HTTP/1.1 404 Not Found" "Cache-Control: no-store, no-cache, must-revalidate"
+      "Content-Length: 0"'
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

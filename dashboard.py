@@ -439,6 +439,657 @@ def api_matches():
         session.close()
 
 
+# =============================================================================
+# SIGNATURE MANAGEMENT ROUTES
+# =============================================================================
+
+from signatures.manager import SignatureManager, Signature, Condition, CATEGORIES, CONFIDENCE_LEVELS, SEVERITY_LEVELS, CONDITION_TYPES
+
+SIGNATURE_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signature Manager - Infrastructure Hunter</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117; 
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { color: #58a6ff; margin-bottom: 20px; }
+        h2 { color: #8b949e; margin: 20px 0 10px; font-size: 1.1em; }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        .nav { 
+            display: flex; 
+            gap: 20px; 
+            margin-bottom: 20px; 
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+        .nav a { color: #8b949e; }
+        .nav a.active { color: #58a6ff; font-weight: 600; }
+        
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat { 
+            background: #161b22; 
+            padding: 15px 20px; 
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+        .stat-value { font-size: 1.5em; font-weight: bold; color: #58a6ff; }
+        .stat-label { font-size: 0.9em; color: #8b949e; }
+        
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: #21262d;
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-body { padding: 16px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { background: #21262d; color: #8b949e; font-weight: 600; font-size: 0.85em; }
+        tr:hover { background: #21262d; }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .badge-high { background: #238636; }
+        .badge-medium { background: #d29922; color: black; }
+        .badge-low { background: #8b949e; color: black; }
+        .badge-enabled { background: #238636; }
+        .badge-disabled { background: #da3633; }
+        .badge-critical { background: #da3633; }
+        
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+        }
+        .btn-primary { background: #238636; color: white; }
+        .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+        .btn-danger { background: #da3633; color: white; }
+        .btn:hover { opacity: 0.9; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #8b949e; }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+        }
+        .form-control:focus { border-color: #58a6ff; outline: none; }
+        select.form-control { cursor: pointer; }
+        textarea.form-control { min-height: 80px; resize: vertical; }
+        
+        .condition-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .condition-header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 10px;
+        }
+        .condition-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .mono { font-family: monospace; }
+        .text-muted { color: #8b949e; }
+        .text-small { font-size: 0.85em; }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .filters select { 
+            padding: 6px 10px; 
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Signature Manager</h1>
+        <nav class="nav">
+            <a href="/">← Dashboard</a>
+            <a href="/signatures" class="active">Signatures</a>
+            <a href="/signatures/create">+ Create New</a>
+        </nav>
+        
+        {{ content | safe }}
+    </div>
+</body>
+</html>
+'''
+
+
+@app.route('/signatures')
+def signatures_list():
+    """List all signatures."""
+    mgr = SignatureManager()
+    
+    # Get filters
+    category = request.args.get('category')
+    confidence = request.args.get('confidence')
+    
+    sigs = mgr.list(category=category)
+    if confidence:
+        sigs = [s for s in sigs if s.confidence == confidence]
+    
+    stats = mgr.stats()
+    
+    rows = ""
+    for sig in sigs:
+        conf_class = f"badge-{sig.confidence}"
+        status_class = "badge-enabled" if sig.enabled else "badge-disabled"
+        rows += f'''
+        <tr>
+            <td><a href="/signatures/{sig.id}" class="mono">{sig.id}</a></td>
+            <td>{sig.name[:50]}{"..." if len(sig.name) > 50 else ""}</td>
+            <td>{sig.category}</td>
+            <td><span class="badge {conf_class}">{sig.confidence}</span></td>
+            <td><span class="badge {status_class}">{"enabled" if sig.enabled else "disabled"}</span></td>
+            <td>{len(sig.conditions)}</td>
+            <td class="text-muted">{sig.version}</td>
+        </tr>
+        '''
+    
+    content = f'''
+    <div class="stats-row">
+        <div class="stat"><div class="stat-value">{stats["total"]}</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-value">{stats["enabled"]}</div><div class="stat-label">Enabled</div></div>
+        <div class="stat"><div class="stat-value">{stats["by_confidence"].get("high", 0)}</div><div class="stat-label">High Confidence</div></div>
+        <div class="stat"><div class="stat-value">{len(stats["by_category"])}</div><div class="stat-label">Categories</div></div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <span>Signatures</span>
+            <a href="/signatures/create" class="btn btn-primary">+ Create</a>
+        </div>
+        <div class="card-body">
+            <div class="filters">
+                <select onchange="location.href='?category='+this.value">
+                    <option value="">All Categories</option>
+                    {"".join(f'<option value="{c}" {"selected" if c == category else ""}>{c}</option>' for c in CATEGORIES)}
+                </select>
+                <select onchange="location.href='?confidence='+this.value">
+                    <option value="">All Confidence</option>
+                    {"".join(f'<option value="{c}" {"selected" if c == confidence else ""}>{c}</option>' for c in CONFIDENCE_LEVELS)}
+                </select>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Confidence</th>
+                        <th>Status</th>
+                        <th>Conditions</th>
+                        <th>Version</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows if rows else '<tr><td colspan="7" class="text-muted" style="text-align:center;padding:40px;">No signatures found</td></tr>'}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    '''
+    
+    return render_template_string(SIGNATURE_TEMPLATE, content=content)
+
+
+@app.route('/signatures/<sig_id>')
+def signature_detail(sig_id):
+    """View signature details."""
+    mgr = SignatureManager()
+    sig = mgr.get(sig_id)
+    
+    if not sig:
+        return render_template_string(SIGNATURE_TEMPLATE, content='<div class="card"><div class="card-body text-muted">Signature not found</div></div>')
+    
+    conditions_html = ""
+    for i, cond in enumerate(sig.conditions, 1):
+        conditions_html += f'''
+        <div class="condition-card">
+            <div class="condition-header">
+                <strong>{i}. {cond.name}</strong>
+                <span class="text-muted">weight: {cond.weight}</span>
+            </div>
+            <div class="condition-grid">
+                <div><span class="text-muted">Type:</span> {cond.type}</div>
+                <div><span class="text-muted">Operator:</span> {cond.operator}</div>
+                <div><span class="text-muted">Field:</span> <code>{cond.field}</code></div>
+                <div><span class="text-muted">Value:</span> <code>{cond.value[:60]}{"..." if len(str(cond.value)) > 60 else ""}</code></div>
+            </div>
+            {f'<div class="text-small text-muted" style="margin-top:8px;">Note: {cond.note}</div>' if cond.note else ''}
+        </div>
+        '''
+    
+    refs_html = ""
+    for ref in sig.references:
+        url = ref.get("url", "")
+        title = ref.get("title", url)
+        refs_html += f'<li><a href="{url}" target="_blank">{title}</a></li>'
+    
+    conf_class = f"badge-{sig.confidence}"
+    sev_class = f"badge-{sig.severity}"
+    
+    content = f'''
+    <div class="card">
+        <div class="card-header">
+            <span>{sig.name}</span>
+            <div>
+                <a href="/signatures/{sig.id}/edit" class="btn btn-secondary">Edit</a>
+                <a href="/signatures/{sig.id}/toggle" class="btn btn-secondary">{"Disable" if sig.enabled else "Enable"}</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+                <div>
+                    <p><span class="text-muted">ID:</span> <code>{sig.id}</code></p>
+                    <p><span class="text-muted">Version:</span> {sig.version}</p>
+                    <p><span class="text-muted">Category:</span> {sig.category}</p>
+                    <p><span class="text-muted">Author:</span> {sig.author or "—"}</p>
+                </div>
+                <div>
+                    <p><span class="text-muted">Confidence:</span> <span class="badge {conf_class}">{sig.confidence}</span></p>
+                    <p><span class="text-muted">Severity:</span> <span class="badge {sev_class}">{sig.severity}</span></p>
+                    <p><span class="text-muted">FP Rate:</span> {sig.false_positive_rate}</p>
+                    <p><span class="text-muted">Status:</span> {"✓ Enabled" if sig.enabled else "○ Disabled"}</p>
+                </div>
+            </div>
+            
+            <h2>Description</h2>
+            <p style="margin-bottom:20px;">{sig.description}</p>
+            
+            {f'''<h2>Attribution</h2>
+            <p>Actors: {", ".join(sig.attribution_actors)}</p>
+            <p>Confidence: {sig.attribution_confidence}</p>
+            {f"<p class='text-muted text-small'>{sig.attribution_note}</p>" if sig.attribution_note else ""}
+            ''' if sig.attribution_actors else ""}
+            
+            <h2>Detection Logic (match: {sig.logic_match})</h2>
+            {conditions_html}
+            
+            <h2>Queries</h2>
+            <div class="condition-card">
+                <p><strong>Censys:</strong></p>
+                <code style="word-break:break-all;">{sig.queries_censys or sig.generate_censys_query() or "—"}</code>
+            </div>
+            {f'<div class="condition-card"><p><strong>Shodan:</strong></p><code style="word-break:break-all;">{sig.queries_shodan}</code></div>' if sig.queries_shodan else ""}
+            
+            {f'<h2>References</h2><ul style="margin-left:20px;">{refs_html}</ul>' if refs_html else ""}
+        </div>
+    </div>
+    
+    <a href="/signatures" class="btn btn-secondary">← Back to List</a>
+    '''
+    
+    return render_template_string(SIGNATURE_TEMPLATE, content=content)
+
+
+@app.route('/signatures/<sig_id>/toggle')
+def signature_toggle(sig_id):
+    """Toggle signature enabled/disabled."""
+    mgr = SignatureManager()
+    sig = mgr.get(sig_id)
+    
+    if sig:
+        sig.enabled = not sig.enabled
+        mgr.save(sig)
+    
+    return f'<script>location.href="/signatures/{sig_id}";</script>'
+
+
+@app.route('/signatures/create', methods=['GET', 'POST'])
+def signature_create():
+    """Create a new signature."""
+    from datetime import date
+    
+    if request.method == 'POST':
+        mgr = SignatureManager()
+        
+        # Parse conditions from form
+        conditions = []
+        i = 1
+        while f'cond_{i}_name' in request.form:
+            if request.form.get(f'cond_{i}_name'):
+                conditions.append(Condition(
+                    name=request.form[f'cond_{i}_name'],
+                    type=request.form.get(f'cond_{i}_type', 'jarm'),
+                    field=request.form.get(f'cond_{i}_field', ''),
+                    operator=request.form.get(f'cond_{i}_operator', 'equals'),
+                    value=request.form.get(f'cond_{i}_value', ''),
+                    weight=int(request.form.get(f'cond_{i}_weight', 50)),
+                    note=request.form.get(f'cond_{i}_note') or None,
+                ))
+            i += 1
+        
+        # Parse actors
+        actors_str = request.form.get('attribution_actors', '')
+        actors = [a.strip() for a in actors_str.split(',') if a.strip()]
+        
+        sig = Signature(
+            id=request.form['id'],
+            name=request.form['name'],
+            version="1.0.0",
+            category=request.form['category'],
+            description=request.form.get('description', ''),
+            logic_match=request.form.get('logic_match', 'any'),
+            conditions=conditions,
+            author=request.form.get('author') or None,
+            attribution_actors=actors,
+            attribution_confidence=request.form.get('attribution_confidence', 'low'),
+            confidence=request.form.get('confidence', 'medium'),
+            severity=request.form.get('severity', 'medium'),
+            last_verified=date.today().isoformat(),
+        )
+        sig.queries_censys = sig.generate_censys_query()
+        
+        errors = sig.validate()
+        if not errors:
+            mgr.save(sig)
+            return f'<script>location.href="/signatures/{sig.id}";</script>'
+    
+    # Form
+    cat_options = ''.join(f'<option value="{c}">{c}</option>' for c in CATEGORIES)
+    conf_options = ''.join(f'<option value="{c}" {"selected" if c == "medium" else ""}>{c}</option>' for c in CONFIDENCE_LEVELS)
+    sev_options = ''.join(f'<option value="{c}" {"selected" if c == "medium" else ""}>{c}</option>' for c in SEVERITY_LEVELS)
+    type_options = ''.join(f'<option value="{c}">{c}</option>' for c in CONDITION_TYPES)
+    
+    content = f'''
+    <div class="card">
+        <div class="card-header">Create New Signature</div>
+        <div class="card-body">
+            <form method="POST">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div class="form-group">
+                        <label>ID (lowercase-with-hyphens)</label>
+                        <input type="text" name="id" class="form-control mono" required pattern="[a-z0-9-]+">
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" class="form-control">{cat_options}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Confidence</label>
+                        <select name="confidence" class="form-control">{conf_options}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Severity</label>
+                        <select name="severity" class="form-control">{sev_options}</select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Author</label>
+                    <input type="text" name="author" class="form-control">
+                </div>
+                
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+                    <div class="form-group">
+                        <label>Attribution Actors (comma-separated)</label>
+                        <input type="text" name="attribution_actors" class="form-control" placeholder="APT29, FIN7, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Match Logic</label>
+                        <select name="logic_match" class="form-control">
+                            <option value="any">Any (OR)</option>
+                            <option value="all">All (AND)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h2>Detection Conditions</h2>
+                <div id="conditions">
+                    <div class="condition-card">
+                        <div class="condition-grid">
+                            <div class="form-group">
+                                <label>Condition Name</label>
+                                <input type="text" name="cond_1_name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select name="cond_1_type" class="form-control">{type_options}</select>
+                            </div>
+                            <div class="form-group">
+                                <label>Field</label>
+                                <input type="text" name="cond_1_field" class="form-control mono" placeholder="services.tls.certificates.leaf_data.fingerprint">
+                            </div>
+                            <div class="form-group">
+                                <label>Value</label>
+                                <input type="text" name="cond_1_value" class="form-control mono">
+                            </div>
+                            <div class="form-group">
+                                <label>Weight (0-100)</label>
+                                <input type="number" name="cond_1_weight" class="form-control" value="50" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Note (optional)</label>
+                                <input type="text" name="cond_1_note" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top:20px;">
+                    <button type="submit" class="btn btn-primary">Create Signature</button>
+                    <a href="/signatures" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    '''
+    
+    return render_template_string(SIGNATURE_TEMPLATE, content=content)
+
+
+@app.route('/signatures/<sig_id>/edit', methods=['GET', 'POST'])
+def signature_edit(sig_id):
+    """Edit a signature."""
+    from datetime import date
+    mgr = SignatureManager()
+    sig = mgr.get(sig_id)
+    
+    if not sig:
+        return render_template_string(SIGNATURE_TEMPLATE, content='<div class="card"><div class="card-body">Signature not found</div></div>')
+    
+    if request.method == 'POST':
+        # Update fields
+        sig.name = request.form['name']
+        sig.category = request.form['category']
+        sig.description = request.form.get('description', '')
+        sig.author = request.form.get('author') or None
+        sig.confidence = request.form.get('confidence', 'medium')
+        sig.severity = request.form.get('severity', 'medium')
+        sig.logic_match = request.form.get('logic_match', 'any')
+        
+        # Parse actors
+        actors_str = request.form.get('attribution_actors', '')
+        sig.attribution_actors = [a.strip() for a in actors_str.split(',') if a.strip()]
+        
+        # Bump version
+        parts = sig.version.split('.')
+        parts[-1] = str(int(parts[-1]) + 1)
+        sig.version = '.'.join(parts)
+        
+        sig.last_verified = date.today().isoformat()
+        sig.queries_censys = sig.generate_censys_query()
+        
+        mgr.save(sig)
+        return f'<script>location.href="/signatures/{sig.id}";</script>'
+    
+    # Form with current values
+    cat_options = ''.join(f'<option value="{c}" {"selected" if c == sig.category else ""}>{c}</option>' for c in CATEGORIES)
+    conf_options = ''.join(f'<option value="{c}" {"selected" if c == sig.confidence else ""}>{c}</option>' for c in CONFIDENCE_LEVELS)
+    sev_options = ''.join(f'<option value="{c}" {"selected" if c == sig.severity else ""}>{c}</option>' for c in SEVERITY_LEVELS)
+    
+    conditions_html = ""
+    for i, cond in enumerate(sig.conditions, 1):
+        conditions_html += f'''
+        <div class="condition-card">
+            <p><strong>{cond.name}</strong> ({cond.type})</p>
+            <p class="mono text-small">{cond.field} = {cond.value}</p>
+        </div>
+        '''
+    
+    content = f'''
+    <div class="card">
+        <div class="card-header">Edit Signature: {sig.id}</div>
+        <div class="card-body">
+            <form method="POST">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div class="form-group">
+                        <label>ID (read-only)</label>
+                        <input type="text" class="form-control mono" value="{sig.id}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name" class="form-control" value="{sig.name}" required>
+                    </div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" class="form-control">{cat_options}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Confidence</label>
+                        <select name="confidence" class="form-control">{conf_options}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Severity</label>
+                        <select name="severity" class="form-control">{sev_options}</select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control">{sig.description}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Author</label>
+                    <input type="text" name="author" class="form-control" value="{sig.author or ''}">
+                </div>
+                
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+                    <div class="form-group">
+                        <label>Attribution Actors</label>
+                        <input type="text" name="attribution_actors" class="form-control" value="{', '.join(sig.attribution_actors)}">
+                    </div>
+                    <div class="form-group">
+                        <label>Match Logic</label>
+                        <select name="logic_match" class="form-control">
+                            <option value="any" {"selected" if sig.logic_match == "any" else ""}>Any (OR)</option>
+                            <option value="all" {"selected" if sig.logic_match == "all" else ""}>All (AND)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h2>Detection Conditions</h2>
+                <p class="text-muted text-small">Edit conditions via CLI: <code>python sig_cli.py edit {sig.id}</code></p>
+                {conditions_html}
+                
+                <div style="margin-top:20px;">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="/signatures/{sig.id}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    '''
+    
+    return render_template_string(SIGNATURE_TEMPLATE, content=content)
+
+
+@app.route('/api/signatures')
+def api_signatures():
+    """API endpoint for signatures."""
+    mgr = SignatureManager()
+    sigs = mgr.list()
+    
+    return jsonify([{
+        'id': s.id,
+        'name': s.name,
+        'version': s.version,
+        'category': s.category,
+        'confidence': s.confidence,
+        'severity': s.severity,
+        'enabled': s.enabled,
+        'conditions': len(s.conditions),
+    } for s in sigs])
+
+
+@app.route('/api/signatures/<sig_id>')
+def api_signature_detail(sig_id):
+    """API endpoint for signature detail."""
+    import yaml
+    mgr = SignatureManager()
+    sig = mgr.get(sig_id)
+    
+    if not sig:
+        return jsonify({'error': 'Not found'}), 404
+    
+    return jsonify(sig.to_dict())
+
+
 def run_dashboard(host='0.0.0.0', port=5003):
     """Run the dashboard server."""
     app.run(host=host, port=port, debug=False)

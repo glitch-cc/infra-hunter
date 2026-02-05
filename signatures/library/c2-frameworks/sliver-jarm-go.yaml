@@ -1,0 +1,39 @@
+signature:
+  id: sliver-jarm-go
+  name: Sliver - Jarm Go
+  version: 1.0.0
+  category: c2-frameworks
+  description: Open-source cross-platform C2 framework by BishopFox. Go 1.15.2 implementation
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Go
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883
+      weight: 60
+      note: Go 1.15.2 implementation
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Various APTs
+    - Ransomware operators migrating from CS
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883"
+    shodan: ssl.jarm:"2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

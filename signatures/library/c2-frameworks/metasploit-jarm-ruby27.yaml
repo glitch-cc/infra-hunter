@@ -1,0 +1,40 @@
+signature:
+  id: metasploit-jarm-ruby27
+  name: Metasploit - Jarm Ruby27
+  version: 1.0.0
+  category: c2-frameworks
+  description: Most widely used penetration testing framework. Ruby 2.7.0p0 SSL listener
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Ruby27
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 07d14d16d21d21d00042d43d000000aa99ce74e2c6d013c745aa52b5cc042d
+      weight: 60
+      note: Ruby 2.7.0p0 SSL listener
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Pentesters
+    - Script kiddies
+    - Some APTs for initial access
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"07d14d16d21d21d00042d43d000000aa99ce74e2c6d013c745aa52b5cc042d"
+    shodan: ssl.jarm:"07d14d16d21d21d00042d43d000000aa99ce74e2c6d013c745aa52b5cc042d"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature

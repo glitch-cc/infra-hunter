@@ -1,0 +1,40 @@
+signature:
+  id: mythic-jarm-aiohttp
+  name: Mythic - Jarm Aiohttp
+  version: 1.0.0
+  category: c2-frameworks
+  description: Cross-platform post-exploitation framework with web-based UI. Python
+    3 with aiohttp 3
+  logic:
+    match: any
+    conditions:
+    - name: Jarm Aiohttp
+      type: jarm
+      field: services.jarm.fingerprint
+      operator: equals
+      value: 2ad2ad0002ad2ad00042d42d000000ad9bf51cc3f5a1e29eecb81d0c7b06eb
+      weight: 60
+      note: Python 3 with aiohttp 3
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-05'
+  enabled: true
+  author: C2-JARM Research
+  attribution:
+    actors:
+    - Red teams
+    - Some APT operations
+    confidence: low
+    note: C2 tool used by multiple actors
+  queries:
+    censys: services.jarm.fingerprint:"2ad2ad0002ad2ad00042d42d000000ad9bf51cc3f5a1e29eecb81d0c7b06eb"
+    shodan: ssl.jarm:"2ad2ad0002ad2ad00042d42d000000ad9bf51cc3f5a1e29eecb81d0c7b06eb"
+  references:
+  - url: https://github.com/cedowens/C2-JARM
+    title: C2-JARM
+  changelog:
+  - version: 1.0.0
+    date: '2026-02-05'
+    changes: Initial signature
