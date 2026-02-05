@@ -10,6 +10,44 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import get_engine, get_session, Actor, Pattern, Host
 from signatures.shadowsyndicate import get_infra_hunter_patterns, KNOWN_IPS, ASNS
+from signatures.c2_frameworks import get_infra_hunter_patterns as get_c2_patterns, ALL_C2_FRAMEWORKS
+
+
+def load_c2_frameworks(session, verbose=True):
+    """Load C2 framework signatures into the database."""
+    
+    patterns = get_c2_patterns()
+    loaded = 0
+    
+    for p_data in patterns:
+        existing = session.query(Pattern).filter_by(name=p_data['name']).first()
+        if existing:
+            if verbose:
+                print(f"  Pattern exists: {p_data['name']}")
+            continue
+        
+        pattern = Pattern(
+            name=p_data['name'],
+            pattern_type=p_data['pattern_type'],
+            definition=p_data['definition'],
+            description=p_data['description'],
+            actor_id=None,  # C2 tools are used by multiple actors
+            confidence=p_data['confidence'],
+            source='C2-JARM Research',
+            references=p_data.get('references', []),
+            censys_query=p_data.get('shodan_query', ''),
+        )
+        session.add(pattern)
+        loaded += 1
+        if verbose:
+            print(f"  Added pattern: {p_data['name']}")
+    
+    session.commit()
+    
+    if verbose:
+        print(f"\nLoaded {loaded} new C2 framework patterns")
+    
+    return loaded
 
 
 def load_shadowsyndicate(session, verbose=True):
@@ -99,9 +137,9 @@ def load_all_signatures(db_url=None, verbose=True):
             print("Loading ShadowSyndicate signatures...")
         total += load_shadowsyndicate(session, verbose=verbose)
         
-        # Add more signature loaders here as we create them
-        # total += load_apt29(session, verbose=verbose)
-        # total += load_lazarus(session, verbose=verbose)
+        if verbose:
+            print("\nLoading C2 Framework signatures...")
+        total += load_c2_frameworks(session, verbose=verbose)
         
         if verbose:
             print(f"\nTotal: {total} new patterns loaded")
