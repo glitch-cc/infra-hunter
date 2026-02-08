@@ -1,0 +1,43 @@
+signature:
+  id: evilginx-jarm
+  name: Evilginx2 - JARM Fingerprint
+  version: 1.0.0
+  category: phishing
+  description: |
+    Detects Evilginx2 phishing framework via JARM fingerprint.
+    Evilginx2 is a man-in-the-middle attack framework for phishing
+    credentials and session tokens, bypassing 2FA.
+  logic:
+    match: all
+    conditions:
+      - name: evilginx_jarm
+        type: jarm
+        field: services.jarm.fingerprint
+        operator: equals
+        value: "20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
+        weight: 80
+        note: Go-based JARM fingerprint common to Evilginx
+  metadata:
+    confidence: medium
+    severity: critical
+    false_positive_rate: medium
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Phishing operators
+      - Initial Access Brokers
+    confidence: low
+    note: Popular adversary-in-the-middle framework
+  queries:
+    censys: services.jarm.fingerprint:"20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
+  references:
+    - url: https://github.com/kgretzky/evilginx2
+      title: Evilginx2 GitHub
+    - url: https://github.com/cedowens/C2-JARM
+      title: C2-JARM Research
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature

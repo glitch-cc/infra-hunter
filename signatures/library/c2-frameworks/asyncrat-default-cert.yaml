@@ -1,0 +1,51 @@
+signature:
+  id: asyncrat-default-cert
+  name: AsyncRAT - Default Self-Signed Certificate
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects AsyncRAT C2 servers using the default self-signed certificate.
+    AsyncRAT is an open-source RAT that communicates over encrypted TCP.
+    Default certificates have CN=AsyncRAT Server in both issuer and subject.
+  logic:
+    match: any
+    conditions:
+      - name: asyncrat_issuer_dn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.issuer_dn
+        operator: contains
+        value: "CN=AsyncRAT Server"
+        weight: 95
+      - name: asyncrat_subject_cn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.subject.common_name
+        operator: equals
+        value: "AsyncRAT Server"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various cybercriminals
+      - Initial Access Brokers
+    confidence: low
+    note: Open-source RAT used by many different actors
+  queries:
+    censys: services.tls.certificates.leaf_data.issuer_dn="CN=AsyncRAT Server"
+    shodan: ssl.cert.issuer.cn:"AsyncRAT Server"
+  references:
+    - url: https://axmahr.github.io/posts/asyncrat-detection/
+      title: Reliable AsyncRAT Detection Technique
+    - url: https://corelight.com/blog/newsroom/news/hunt-of-the-month-detecting-async-rat-malware
+      title: Corelight - Detecting AsyncRAT
+    - url: https://github.com/axmahr/QuasarRAT-Family-Detection
+      title: QuasarRAT Family Detection Tool
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature

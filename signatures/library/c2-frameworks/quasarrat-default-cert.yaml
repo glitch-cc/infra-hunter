@@ -1,0 +1,48 @@
+signature:
+  id: quasarrat-default-cert
+  name: QuasarRAT - Default Self-Signed Certificate
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects QuasarRAT C2 servers. QuasarRAT is a popular open-source RAT
+    that has spawned many derivatives (AsyncRAT, VenomRAT, DcRAT, etc.).
+    Used by both script kiddies and APT groups including APT10.
+  logic:
+    match: any
+    conditions:
+      - name: quasar_subject_cn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.subject.common_name
+        operator: contains
+        value: "Quasar"
+        weight: 85
+      - name: quasar_issuer_cn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.issuer.common_name
+        operator: contains
+        value: "Quasar Server"
+        weight: 90
+  metadata:
+    confidence: medium
+    severity: high
+    false_positive_rate: medium
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - APT10
+      - Various cybercriminals
+    confidence: low
+    note: Widely used open-source RAT
+  queries:
+    censys: services.tls.certificates.leaf_data.subject.common_name:*Quasar*
+  references:
+    - url: https://socprime.com/blog/quasar-rat-detecting-malicious-successors/
+      title: SOC Prime - QuasarRAT Detection
+    - url: https://dfir.ch/posts/asyncrat_quasarrat/
+      title: DFIR.ch - Hunting AsyncRAT & QuasarRAT
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature

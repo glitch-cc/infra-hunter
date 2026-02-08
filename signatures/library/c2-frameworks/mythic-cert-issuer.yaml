@@ -1,0 +1,47 @@
+signature:
+  id: mythic-cert-issuer
+  name: Mythic C2 - Default Certificate Pattern
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects Mythic C2 framework using default certificate with O=Mythic
+    in the subject DN. Mythic is a collaborative, multi-platform C2
+    framework written in Python and JavaScript.
+  logic:
+    match: any
+    conditions:
+      - name: mythic_subject_org
+        type: cert_field
+        field: services.tls.certificates.leaf_data.subject.organization
+        operator: equals
+        value: "Mythic"
+        weight: 95
+      - name: mythic_subject_dn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.subject_dn
+        operator: contains
+        value: "O=Mythic"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various threat actors
+    confidence: low
+    note: Modern multi-platform C2 framework
+  queries:
+    censys: services.tls.certificates.leaf_data.subject_dn:*O=Mythic*
+  references:
+    - url: https://github.com/its-a-feature/Mythic
+      title: Mythic C2 GitHub
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - C2 Certificate Patterns
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature

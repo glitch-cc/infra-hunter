@@ -1,0 +1,42 @@
+signature:
+  id: havoc-http-header
+  name: Havoc C2 - X_Havoc HTTP Header
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects Havoc C2 framework servers via the X_Havoc custom HTTP header.
+    Havoc is a modern open-source C2 framework for post-exploitation.
+    This header is documented in the official Havoc wiki.
+  logic:
+    match: all
+    conditions:
+      - name: havoc_header
+        type: http_header
+        field: services.http.response.headers
+        operator: contains_key
+        value: "X_Havoc"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various threat actors
+    confidence: low
+    note: Modern C2 framework, successor to Cobalt Strike in some operations
+  queries:
+    censys: services.http.response.headers:(key:"X_Havoc")
+    shodan: http.headers_hash:-297069493
+  references:
+    - url: https://github.com/HavocFramework/Havoc
+      title: Havoc C2 GitHub
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - C2 Hunting Cases
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Havoc source code analysis

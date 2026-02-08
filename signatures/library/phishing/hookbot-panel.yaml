@@ -1,0 +1,40 @@
+signature:
+  id: hookbot-panel
+  name: Hookbot - Admin Panel Title
+  version: 1.0.0
+  category: phishing
+  description: |
+    Detects Hookbot banking trojan admin panels via hardcoded HTML title.
+    Hookbot is an Android banking trojan that targets financial apps.
+    Operators often leave default panel titles unchanged.
+  logic:
+    match: all
+    conditions:
+      - name: hookbot_title
+        type: http_title
+        field: services.http.response.html_title
+        operator: equals
+        value: "HOOKBOT PANEL"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Banking trojan operators
+    confidence: low
+    note: Mobile banking trojan
+  queries:
+    censys: services.http.response.html_title:"HOOKBOT PANEL"
+    shodan: http.title:"HOOKBOT PANEL"
+  references:
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - C2 Hunting Cases
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Netlas research

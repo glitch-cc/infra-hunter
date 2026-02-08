@@ -1,0 +1,41 @@
+signature:
+  id: orcusrat-default-cert
+  name: OrcusRAT - Default Self-Signed Certificate
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects OrcusRAT C2 servers using the default certificate with
+    CN=OrcusServerCertificate in the issuer DN. OrcusRAT is a commercial
+    RAT that has been widely abused by cybercriminals.
+  logic:
+    match: all
+    conditions:
+      - name: orcus_issuer_dn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.issuer_dn
+        operator: equals
+        value: "CN=OrcusServerCertificate"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various cybercriminals
+    confidence: low
+    note: Commercial RAT frequently abused
+  queries:
+    censys: services.tls.certificates.leaf_data.issuer_dn="CN=OrcusServerCertificate"
+  references:
+    - url: https://sslbl.abuse.ch/
+      title: SSL Blacklist - Abuse.ch
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - C2 Hunting Cases
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Netlas research

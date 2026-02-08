@@ -1,0 +1,45 @@
+signature:
+  id: dcrat-default-cert
+  name: DcRAT - Default Self-Signed Certificate
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects DcRAT (Dark Crystal RAT) C2 servers. DcRAT is a derivative of
+    AsyncRAT with additional features. Often uses certificates with
+    "qwqdanchun" developer signature similar to VenomRAT.
+  logic:
+    match: any
+    conditions:
+      - name: dcrat_subject
+        type: cert_field
+        field: services.tls.certificates.leaf_data.subject.common_name
+        operator: contains
+        value: "DcRAT"
+        weight: 90
+      - name: dcrat_issuer
+        type: cert_field
+        field: services.tls.certificates.leaf_data.issuer_dn
+        operator: contains
+        value: "DcRAT"
+        weight: 90
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various cybercriminals
+    confidence: low
+    note: AsyncRAT derivative
+  queries:
+    censys: services.tls.certificates.leaf_data.issuer_dn:*DcRAT*
+  references:
+    - url: https://github.com/qwqdanchun/DcRat
+      title: DcRAT GitHub Repository
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature

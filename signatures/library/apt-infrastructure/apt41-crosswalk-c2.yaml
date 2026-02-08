@@ -1,0 +1,46 @@
+signature:
+  id: apt41-crosswalk-c2
+  name: APT41 - Crosswalk Backdoor Infrastructure
+  version: 1.0.0
+  category: apt-infrastructure
+  description: |
+    Detects infrastructure associated with APT41/Winnti group's Crosswalk backdoor.
+    Crosswalk is a modular backdoor implemented in shellcode, used since at least 2017.
+    The network infrastructure often shows overlap with historical Winnti campaigns.
+  logic:
+    match: any
+    conditions:
+      - name: apt41_ssl_cert_sha1
+        type: cert_fingerprint
+        field: services.tls.certificates.leaf_data.fingerprint
+        operator: equals
+        value: b8cff709950cfa86665363d9553532db9922265c
+        weight: 90
+        note: Known APT41 SSL certificate from CrowdStrike 2018 report
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - APT41
+      - Winnti
+      - Wicked Panda
+    confidence: high
+    note: Certificate overlaps with documented APT41 infrastructure from multiple vendors
+  queries:
+    censys: services.tls.certificates.leaf_data.fingerprint:"b8cff709950cfa86665363d9553532db9922265c"
+  references:
+    - url: https://go.crowdstrike.com/rs/281-OBQ-266/images/Report2019GlobalThreatReport.pdf
+      title: CrowdStrike 2019 Global Threat Report
+    - url: https://global.ptsecurity.com/en/research/pt-esc-threat-intelligence/higaisa-or-winnti-apt-41-backdoors-old-and-new/
+      title: PT Security - APT41 Backdoors Analysis
+    - url: https://content.fireeye.com/apt-41/rpt-apt41/
+      title: FireEye APT41 Report
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from PT Security research

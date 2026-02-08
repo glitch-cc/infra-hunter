@@ -751,11 +751,10 @@ def signature_detail(sig_id):
             <h2>Description</h2>
             <p style="margin-bottom:20px;">{sig.description}</p>
             
-            {f'''<h2>Attribution</h2>
+            ''' + (f'''<h2>Attribution</h2>
             <p>Actors: {", ".join(sig.attribution_actors)}</p>
             <p>Confidence: {sig.attribution_confidence}</p>
-            {f"<p class='text-muted text-small'>{sig.attribution_note}</p>" if sig.attribution_note else ""}
-            ''' if sig.attribution_actors else ""}
+            ''' + (f"<p class='text-muted text-small'>{sig.attribution_note}</p>" if sig.attribution_note else "") if sig.attribution_actors else "") + '''
             
             <h2>Detection Logic (match: {sig.logic_match})</h2>
             {conditions_html}

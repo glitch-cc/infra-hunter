@@ -1,0 +1,39 @@
+signature:
+  id: bitrat-default-cert
+  name: BitRAT - Default Self-Signed Certificate
+  version: 1.0.0
+  category: c2-frameworks
+  description: |
+    Detects BitRAT C2 servers using the default certificate with
+    CN=BitRAT in the issuer DN. BitRAT is a commercial RAT sold on
+    underground forums with extensive features including HVNC.
+  logic:
+    match: all
+    conditions:
+      - name: bitrat_issuer_dn
+        type: cert_field
+        field: services.tls.certificates.leaf_data.issuer_dn
+        operator: equals
+        value: "CN=BitRAT"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various cybercriminals
+    confidence: low
+    note: Commercial RAT sold on underground forums
+  queries:
+    censys: services.tls.certificates.leaf_data.issuer_dn="CN=BitRAT"
+  references:
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - C2 Hunting Cases
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Netlas research

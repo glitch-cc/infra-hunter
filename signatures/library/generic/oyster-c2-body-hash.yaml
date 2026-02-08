@@ -1,0 +1,39 @@
+signature:
+  id: oyster-c2-body-hash
+  name: Oyster C2 - HTTP Body Hash
+  version: 1.0.0
+  category: generic
+  description: |
+    Detects Oyster C2 infrastructure via HTTP response body SHA-256 hash.
+    Reused payloads and panel pages produce identical body hashes,
+    making this effective for clustering related infrastructure.
+  logic:
+    match: all
+    conditions:
+      - name: oyster_body_hash
+        type: http_body_hash
+        field: services.http.response.body_hash
+        operator: equals
+        value: "f84b78e96fc74a902481247dc87434c5ce7b6130f0fa53ab5ba1f6fe1d50d377"
+        weight: 95
+  metadata:
+    confidence: high
+    severity: high
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Unknown
+    confidence: low
+    note: Oyster backdoor infrastructure
+  queries:
+    censys: services.http.response.body_hash:"sha256:f84b78e96fc74a902481247dc87434c5ce7b6130f0fa53ab5ba1f6fe1d50d377"
+  references:
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - Oyster C2 Hunting
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Netlas research

@@ -1,0 +1,56 @@
+signature:
+  id: socgholish-jarm-ssl
+  name: SocGholish - JARM + SSL Self-Signed Pattern
+  version: 1.0.0
+  category: generic
+  description: |
+    Detects SocGholish fake update infrastructure using combination of
+    JARM fingerprint, HTTP body hash, and self-signed certificate pattern.
+    SocGholish uses drive-by downloads masquerading as browser updates.
+    Often followed by Cobalt Strike or ransomware deployment.
+  logic:
+    match: all
+    conditions:
+      - name: socgholish_jarm
+        type: jarm
+        field: services.jarm.fingerprint
+        operator: equals
+        value: "2ad2ad16d2ad2ad0002ad2ad2ad2ad367956b0f7c241e0ae292cd63faf3f5e"
+        weight: 70
+      - name: socgholish_cert_issuer
+        type: cert_field
+        field: services.tls.certificates.leaf_data.issuer.organization
+        operator: equals
+        value: "Internet Widgits Pty Ltd"
+        weight: 60
+        note: Default OpenSSL self-signed cert org
+      - name: socgholish_cert_subject
+        type: cert_field
+        field: services.tls.certificates.leaf_data.subject.organization
+        operator: equals
+        value: "Internet Widgits Pty Ltd"
+        weight: 60
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: medium
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - TA569
+      - Evil Corp affiliates
+    confidence: medium
+    note: SocGholish is operated by TA569, often leads to ransomware
+  queries:
+    censys: services.jarm.fingerprint:"2ad2ad16d2ad2ad0002ad2ad2ad2ad367956b0f7c241e0ae292cd63faf3f5e" AND services.tls.certificates.leaf_data.issuer.organization:"Internet Widgits Pty Ltd"
+  references:
+    - url: https://medium.com/@t3chi3/unmasking-the-socgholish-infrastructure-using-ssl-jarm-fingerprints-e028e96f56df
+      title: Unmasking SocGholish Infrastructure
+    - url: https://www.proofpoint.com/us/blog/threat-insight/part-1-socgholish-very-real-threat-very-fake-update
+      title: Proofpoint - SocGholish Analysis
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Medium research

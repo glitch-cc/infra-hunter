@@ -1,0 +1,57 @@
+signature:
+  id: sectoprat-http-headers
+  name: SectopRAT - HTTP Response Headers Pattern
+  version: 1.0.0
+  category: generic
+  description: |
+    Detects SectopRAT C2 servers using characteristic HTTP response pattern.
+    SectopRAT commonly exposes C2 interface on port 9000 with specific
+    header combinations including Microsoft-HTTPAPI/2.0 server header.
+  logic:
+    match: all
+    conditions:
+      - name: sectoprat_port
+        type: port
+        field: services.port
+        operator: equals
+        value: "9000"
+        weight: 40
+      - name: sectoprat_server
+        type: http_header
+        field: services.http.response.headers.server
+        operator: equals
+        value: "Microsoft-HTTPAPI/2.0"
+        weight: 50
+      - name: sectoprat_status
+        type: http_status
+        field: services.http.response.status_code
+        operator: equals
+        value: "404"
+        weight: 30
+      - name: sectoprat_methods
+        type: http_header
+        field: services.http.response.headers.access_control_allow_methods
+        operator: contains
+        value: "OPTIONS, HEAD, GET, PUT, POST, DELETE, PATCH"
+        weight: 60
+  metadata:
+    confidence: high
+    severity: critical
+    false_positive_rate: low
+    last_verified: '2026-02-08'
+  enabled: true
+  author: Glitch - OpenClaw
+  attribution:
+    actors:
+      - Various cybercriminals
+    confidence: low
+    note: SectopRAT is a .NET RAT often distributed via malvertising
+  queries:
+    censys: services.port:9000 AND services.http.response.headers.server:"Microsoft-HTTPAPI/2.0" AND services.http.response.status_code:404
+  references:
+    - url: https://netlas.io/blog/c2_hunting_cases/
+      title: Netlas - Proactive Threat Hunting
+  changelog:
+    - version: 1.0.0
+      date: '2026-02-08'
+      changes: Initial signature from Netlas research
