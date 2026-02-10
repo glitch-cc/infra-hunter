@@ -209,13 +209,85 @@ TEMPLATE = '''
             background: #21262d;
             border-radius: 8px;
             padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
         }
+        .pattern-card:hover { border-color: #58a6ff; transform: translateY(-2px); }
         .pattern-card h4 { color: #f0f6fc; margin-bottom: 8px; font-size: 0.95em; }
         .pattern-stats { display: flex; gap: 20px; margin-top: 10px; }
         .pattern-stat { text-align: center; }
         .pattern-stat .value { font-size: 1.4em; font-weight: bold; color: #58a6ff; }
         .pattern-stat .label { font-size: 0.75em; color: #8b949e; }
         .pattern-stat.new .value { color: #3fb950; }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            background: #21262d;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { color: #f0f6fc; font-size: 1.2em; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0 8px;
+        }
+        .modal-close:hover { color: #f0f6fc; }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+        }
+        .modal-meta-item { }
+        .modal-meta-item .label { color: #8b949e; font-size: 0.85em; }
+        .modal-meta-item .value { color: #f0f6fc; font-weight: 600; }
+        .modal-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .modal-link:hover { background: #30363d; }
         
         /* Timeline */
         .timeline { padding: 16px; }
@@ -408,6 +480,45 @@ TEMPLATE = '''
         </div>
     </div>
     
+    <!-- PATTERN MODAL -->
+    <div class="modal-overlay" id="pattern-modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Pattern Details</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-meta">
+                    <div class="modal-meta-item">
+                        <div class="label">New Hosts</div>
+                        <div class="value" id="modal-new-count" style="color: #3fb950">-</div>
+                    </div>
+                    <div class="modal-meta-item">
+                        <div class="label">Total Hosts</div>
+                        <div class="value" id="modal-total-count">-</div>
+                    </div>
+                    <div class="modal-meta-item">
+                        <div class="label">Confidence</div>
+                        <div class="value" id="modal-confidence">-</div>
+                    </div>
+                </div>
+                <a href="#" class="modal-link" id="modal-sig-link" target="_blank">🎯 View Signature Definition</a>
+                <h4 style="margin: 20px 0 15px; color: #f0f6fc;">New Hosts Matching This Pattern</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>IP</th>
+                            <th>Country</th>
+                            <th>Organization</th>
+                            <th>First Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-hosts-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
     <script>
     let currentHours = 24;
     let currentTab = 'delta';
@@ -448,11 +559,12 @@ TEMPLATE = '''
         document.getElementById('total-count').textContent = hosts.total || 0;
         document.getElementById('new-badge').textContent = delta.summary?.new_hosts || 0;
         
-        // Pattern grid
+        // Pattern grid - clickable cards
+        window.deltaData = delta;  // Store for modal use
         const patternHtml = Object.entries(delta.new_by_pattern || {})
             .sort((a, b) => b[1] - a[1])
             .map(([name, count]) => `
-                <div class="pattern-card">
+                <div class="pattern-card" onclick="openPatternModal('${name.replace(/'/g, "\\'")}', ${count}, ${delta.total_by_pattern?.[name] || count})">
                     <h4>${name}</h4>
                     <div class="pattern-stats">
                         <div class="pattern-stat new">
@@ -559,6 +671,42 @@ TEMPLATE = '''
         if (type.includes('gone')) return 'gone';
         return 'changed';
     }
+    
+    // Modal functions
+    async function openPatternModal(patternName, newCount, totalCount) {
+        document.getElementById('modal-title').textContent = patternName;
+        document.getElementById('modal-new-count').textContent = '+' + newCount;
+        document.getElementById('modal-total-count').textContent = totalCount;
+        
+        // Convert pattern name to likely signature ID
+        const sigId = patternName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+        document.getElementById('modal-sig-link').href = '/dataset/view/' + sigId;
+        
+        // Fetch hosts for this pattern
+        const resp = await fetch('api/pattern-hosts?name=' + encodeURIComponent(patternName) + '&hours=' + currentHours);
+        const data = await resp.json();
+        
+        document.getElementById('modal-confidence').textContent = data.confidence || 'medium';
+        
+        const hostsHtml = (data.hosts || []).map(h => `
+            <tr>
+                <td class="ip">${h.ip}</td>
+                <td class="country">${h.country || '??'}</td>
+                <td>${(h.asn_name || '').substring(0, 40)}</td>
+                <td>${formatTime(h.first_seen)}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="empty">No hosts found</td></tr>';
+        document.getElementById('modal-hosts-table').innerHTML = hostsHtml;
+        
+        document.getElementById('pattern-modal').classList.add('active');
+    }
+    
+    function closeModal() {
+        document.getElementById('pattern-modal').classList.remove('active');
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
     
     // Initial load
     loadData();
@@ -748,6 +896,49 @@ def api_alerts():
     
     db.close()
     return jsonify({'alerts': alerts})
+
+
+@app.route('/api/pattern-hosts')
+def api_pattern_hosts():
+    """Get hosts matching a specific pattern, filtered by time."""
+    pattern_name = request.args.get('name', '')
+    hours = int(request.args.get('hours', 24))
+    since = (datetime.utcnow() - timedelta(hours=hours)).strftime('%Y-%m-%d %H:%M:%S')
+    
+    db = get_db()
+    cur = db.cursor()
+    
+    # Get pattern info
+    cur.execute("SELECT id, confidence FROM patterns WHERE name = ?", (pattern_name,))
+    row = cur.fetchone()
+    if not row:
+        db.close()
+        return jsonify({'error': 'Pattern not found', 'hosts': [], 'confidence': 'unknown'})
+    
+    pattern_id, confidence = row
+    
+    # Get new hosts matching this pattern
+    cur.execute("""
+        SELECT h.ip, h.country, h.asn_name, h.first_seen, h.jarm
+        FROM hosts h
+        JOIN matches m ON h.id = m.host_id
+        WHERE m.pattern_id = ? AND h.first_seen >= ?
+        ORDER BY h.first_seen DESC
+        LIMIT 100
+    """, (pattern_id, since))
+    
+    hosts = [
+        {'ip': r[0], 'country': r[1], 'asn_name': r[2], 'first_seen': r[3], 'jarm': r[4]}
+        for r in cur.fetchall()
+    ]
+    
+    db.close()
+    return jsonify({
+        'pattern': pattern_name,
+        'confidence': confidence or 'medium',
+        'hosts': hosts,
+        'count': len(hosts)
+    })
 
 
 if __name__ == '__main__':
