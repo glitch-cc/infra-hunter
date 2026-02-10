@@ -302,7 +302,7 @@ DASHBOARD_HTML = """
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
         
-        const resp = await fetch('/api/delta?hours=' + hours);
+        const resp = await fetch('api/delta?hours=' + hours);
         const data = await resp.json();
         
         // Update counts
