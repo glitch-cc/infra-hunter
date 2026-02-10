@@ -9,7 +9,7 @@ import json
 import sqlite3
 from datetime import datetime, timedelta
 from collections import defaultdict
-from flask import Flask, render_template_string, jsonify, request
+from flask import Flask, render_template_string, jsonify, request, Response
 
 app = Flask(__name__)
 
@@ -502,7 +502,10 @@ TEMPLATE = '''
                         <div class="value" id="modal-confidence">-</div>
                     </div>
                 </div>
-                <a href="#" class="modal-link" id="modal-sig-link" target="_blank">🎯 View Signature Definition</a>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <a href="#" class="modal-link" id="modal-sig-link" target="_blank">🎯 View Signature Definition</a>
+                    <a href="#" class="modal-link" id="modal-stix-link" download>📥 Download IOCs (STIX)</a>
+                </div>
                 <h4 style="margin: 20px 0 15px; color: #f0f6fc;">New Hosts Matching This Pattern</h4>
                 <table>
                     <thead>
@@ -678,13 +681,21 @@ TEMPLATE = '''
         document.getElementById('modal-new-count').textContent = '+' + newCount;
         document.getElementById('modal-total-count').textContent = totalCount;
         
-        // Convert pattern name to likely signature ID
-        const sigId = patternName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
-        document.getElementById('modal-sig-link').href = '/dataset/view/' + sigId;
-        
         // Fetch hosts for this pattern
         const resp = await fetch('api/pattern-hosts?name=' + encodeURIComponent(patternName) + '&hours=' + currentHours);
         const data = await resp.json();
+        
+        // Set signature link
+        const sigId = patternName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+        document.getElementById('modal-sig-link').href = '/dataset/view/' + sigId;
+        
+        // Set STIX download link
+        if (data.pattern_id && data.count > 0) {
+            document.getElementById('modal-stix-link').href = '/api/pattern/' + data.pattern_id + '/stix';
+            document.getElementById('modal-stix-link').style.display = 'inline';
+        } else {
+            document.getElementById('modal-stix-link').style.display = 'none';
+        }
         
         document.getElementById('modal-confidence').textContent = data.confidence || 'medium';
         
@@ -935,10 +946,122 @@ def api_pattern_hosts():
     db.close()
     return jsonify({
         'pattern': pattern_name,
+        'pattern_id': pattern_id,
         'confidence': confidence or 'medium',
         'hosts': hosts,
         'count': len(hosts)
     })
+
+
+@app.route('/api/pattern/<int:pattern_id>/stix')
+def api_pattern_stix(pattern_id):
+    """Download STIX 2.1 bundle for a pattern's matched hosts."""
+    import uuid
+    
+    db = get_db()
+    cur = db.cursor()
+    
+    # Get pattern info
+    cur.execute("SELECT id, name, pattern_type, description FROM patterns WHERE id = ?", (pattern_id,))
+    row = cur.fetchone()
+    if not row:
+        db.close()
+        return jsonify({'error': 'Pattern not found'}), 404
+    
+    _, pattern_name, pattern_type, description = row
+    
+    # Get all hosts matching this pattern
+    cur.execute("""
+        SELECT h.ip, h.country, h.asn_name, h.first_seen, h.jarm
+        FROM hosts h
+        JOIN matches m ON h.id = m.host_id
+        WHERE m.pattern_id = ?
+    """, (pattern_id,))
+    
+    hosts = cur.fetchall()
+    db.close()
+    
+    if not hosts:
+        return jsonify({'error': 'No hosts found for this pattern'}), 404
+    
+    now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    objects = []
+    
+    # Create Infrastructure object
+    infra_id = f"infrastructure--{uuid.uuid5(uuid.NAMESPACE_DNS, f'infra-hunter-{pattern_id}')}"
+    infra = {
+        "type": "infrastructure",
+        "spec_version": "2.1",
+        "id": infra_id,
+        "created": now,
+        "modified": now,
+        "name": pattern_name,
+        "description": description or f"C2 infrastructure detected by pattern: {pattern_type}",
+        "infrastructure_types": ["command-and-control"],
+    }
+    objects.append(infra)
+    
+    # Create Indicator for each host
+    for host in hosts:
+        ip, country, asn_name, first_seen, jarm = host
+        indicator_id = f"indicator--{uuid.uuid5(uuid.NAMESPACE_DNS, f'{pattern_id}-{ip}')}"
+        
+        created_time = first_seen if first_seen else now
+        if isinstance(created_time, str) and 'T' not in created_time:
+            created_time = created_time.replace(' ', 'T') + '.000Z'
+        elif not isinstance(created_time, str):
+            created_time = now
+        
+        labels = ["c2", pattern_type or "unknown"]
+        if country:
+            labels.append(f"country:{country}")
+        if asn_name:
+            labels.append(f"asn:{asn_name[:50]}")
+        if jarm:
+            labels.append(f"jarm:{jarm[:16]}")
+        
+        indicator = {
+            "type": "indicator",
+            "spec_version": "2.1",
+            "id": indicator_id,
+            "created": created_time,
+            "modified": now,
+            "name": f"{pattern_name} - {ip}",
+            "description": f"C2 infrastructure IP detected via {pattern_type}",
+            "indicator_types": ["malicious-activity", "attribution"],
+            "pattern": f"[ipv4-addr:value = '{ip}']",
+            "pattern_type": "stix",
+            "valid_from": created_time,
+            "labels": labels,
+        }
+        objects.append(indicator)
+        
+        # Relationship: indicator -> infrastructure
+        rel = {
+            "type": "relationship",
+            "spec_version": "2.1",
+            "id": f"relationship--{uuid.uuid4()}",
+            "created": now,
+            "modified": now,
+            "relationship_type": "indicates",
+            "source_ref": indicator_id,
+            "target_ref": infra_id,
+        }
+        objects.append(rel)
+    
+    bundle = {
+        "type": "bundle",
+        "id": f"bundle--{uuid.uuid4()}",
+        "objects": objects,
+    }
+    
+    filename = f"infra-hunter-{pattern_name.lower().replace(' ', '-')}-stix.json"
+    
+    return Response(
+        json.dumps(bundle, indent=2),
+        mimetype='application/json',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
 
 
 if __name__ == '__main__':
