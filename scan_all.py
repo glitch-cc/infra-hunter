@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
 Unified scanner - uses Censys for certs, Shodan for JARM.
+Writes results to both JSON and SQLite database.
 """
 import os
 import sys
 import json
-from datetime import datetime
+import sqlite3
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -22,12 +24,10 @@ if os.path.exists(keys_path):
                 os.environ[k] = v.strip('"\'')
 
 def scan_with_shodan(query: str, max_results: int = 100):
-    """Run a Shodan query."""
     scanner = ShodanScanner()
     return scanner.search(query, max_results)
 
 def scan_with_censys(query: str, max_results: int = 100):
-    """Run a Censys query."""
     import requests
     token = os.environ.get('CENSYS_API_KEY')
     org = os.environ.get('CENSYS_ORG_ID')
@@ -53,23 +53,72 @@ def scan_with_censys(query: str, max_results: int = 100):
         })
     return results
 
+def save_to_database(all_results: dict, db_path: str = 'infra_hunter.db'):
+    """Save scan results to SQLite database."""
+    now = datetime.now(timezone.utc).isoformat()
+    db = sqlite3.connect(db_path)
+    cur = db.cursor()
+    
+    new_hosts = 0
+    new_matches = 0
+    
+    for sig_id, data in all_results.items():
+        # Get or create pattern
+        cur.execute("SELECT id FROM patterns WHERE name = ?", (data['name'],))
+        row = cur.fetchone()
+        if not row:
+            cur.execute("""
+                INSERT INTO patterns (name, pattern_type, definition, description, confidence, censys_query, enabled, created_at)
+                VALUES (?, 'composite', '{}', ?, 'medium', ?, 1, ?)
+            """, (data['name'], f"Source: {data['source']}", data['query'], now))
+            pattern_id = cur.lastrowid
+        else:
+            pattern_id = row[0]
+        
+        for host in data['hosts']:
+            ip = host['ip'] if isinstance(host, dict) else host.ip
+            country = host.get('country', '') if isinstance(host, dict) else getattr(host, 'country', '')
+            org = host.get('org', '') if isinstance(host, dict) else getattr(host, 'org', '')
+            
+            cur.execute("SELECT id FROM hosts WHERE ip = ?", (ip,))
+            row = cur.fetchone()
+            if not row:
+                cur.execute("""
+                    INSERT INTO hosts (ip, country, asn_name, first_seen, last_seen, last_scanned, scan_count, censys_data)
+                    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+                """, (ip, country, org, now, now, now, json.dumps({'country': country, 'org': org})))
+                host_id = cur.lastrowid
+                new_hosts += 1
+            else:
+                host_id = row[0]
+                cur.execute("UPDATE hosts SET last_seen = ?, last_scanned = ?, scan_count = scan_count + 1 WHERE id = ?", 
+                           (now, now, host_id))
+            
+            cur.execute("SELECT id FROM matches WHERE host_id = ? AND pattern_id = ?", (host_id, pattern_id))
+            if not cur.fetchone():
+                cur.execute("""
+                    INSERT INTO matches (host_id, pattern_id, match_score, status, matched_at, match_details)
+                    VALUES (?, ?, 0.8, 'new', ?, '{}')
+                """, (host_id, pattern_id, now))
+                new_matches += 1
+    
+    db.commit()
+    db.close()
+    return new_hosts, new_matches
+
 
 def main():
     mgr = SignatureManager()
     mgr.load_all()
     
     all_results = {}
-    
-    # Get all enabled signatures
     sigs = mgr.list(enabled_only=True)
     print(f"📋 Loaded {len(sigs)} signatures\n")
     
     for sig in sigs:
-        # Determine which source to use
         shodan_query = sig.queries_shodan
         censys_query = sig.queries_censys
         
-        # Use Shodan for JARM queries
         if shodan_query and 'ssl.jarm' in shodan_query:
             print(f"🔍 [{sig.id}] Scanning with Shodan (JARM)...")
             try:
@@ -80,7 +129,7 @@ def main():
                         'source': 'shodan',
                         'query': shodan_query,
                         'count': len(results),
-                        'hosts': [{'ip': r.ip, 'country': r.country, 'org': r.org} for r in results[:10]]
+                        'hosts': [{'ip': r.ip, 'country': r.country, 'org': r.org} for r in results[:20]]
                     }
                     print(f"   ✓ Found {len(results)} hosts")
                 else:
@@ -88,9 +137,7 @@ def main():
             except Exception as e:
                 print(f"   ✗ Error: {e}")
         
-        # Use Censys for cert queries  
         elif censys_query and ('cert.' in censys_query or 'fingerprint' in censys_query.lower()):
-            # Convert to Platform API field names
             platform_query = censys_query.replace(
                 'services.tls.certificates.leaf_data.fingerprint',
                 'host.services.cert.fingerprint_sha256'
@@ -108,7 +155,7 @@ def main():
                         'source': 'censys',
                         'query': platform_query,
                         'count': len(results),
-                        'hosts': results[:10]
+                        'hosts': results[:20]
                     }
                     print(f"   ✓ Found {len(results)} hosts")
                 else:
@@ -117,6 +164,11 @@ def main():
                 print(f"   ✗ Error: {e}")
         else:
             print(f"⏭️  [{sig.id}] Skipping (no supported query)")
+    
+    # Save to database
+    print(f"\n💾 Saving to database...")
+    new_hosts, new_matches = save_to_database(all_results)
+    print(f"   New hosts: {new_hosts}, New matches: {new_matches}")
     
     # Summary
     print(f"\n{'='*60}")
@@ -134,7 +186,7 @@ def main():
     print(f"\n{'='*60}")
     print(f"Total: {len(all_results)} patterns matched, {total_hosts} hosts found")
     
-    # Save results
+    # Save JSON
     outfile = f"scan-results/scan-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     os.makedirs('scan-results', exist_ok=True)
     with open(outfile, 'w') as f:

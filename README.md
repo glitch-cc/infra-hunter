@@ -1,110 +1,94 @@
-# Infrastructure Pattern Intelligence (infra-hunter)
+# Infrastructure Hunter 🎯
 
-Track threat actor infrastructure patterns instead of chasing ephemeral IOCs.
+Automated threat infrastructure detection using JARM fingerprints, certificate analysis, and behavioral patterns.
 
-## Philosophy
+## Features
 
-The Pyramid of Pain teaches us:
-- **IPs decay in 5-14 days** — actors rotate constantly
-- **Domains last slightly longer** — still ephemeral
-- **TTPs persist** — how actors BUILD infrastructure doesn't change quickly
+- **Multi-source scanning**: Shodan (JARM) + Censys (certificates)
+- **32+ detection signatures**: Cobalt Strike, Sliver, Metasploit, Mythic, and more
+- **Web dashboard**: Real-time matches, host tracking, pattern management
+- **Scheduled scans**: Daily automated scans with alerting
+- **YAML-based signatures**: Easy to create and share detection rules
 
-This tool tracks *patterns* in how adversaries set up infrastructure:
-- SSL certificate generation habits
-- Hosting provider preferences
-- Port/service configurations
-- Domain registration patterns
-- HTTP response fingerprints
+## Detected C2 Frameworks
 
-**Output:** "Actor X typically uses [pattern]. Here are 47 new hosts matching that pattern in the last 72 hours."
+| Framework | Signatures | Detection Method |
+|-----------|------------|------------------|
+| Cobalt Strike | 5 | JARM, SSL cert, HTTP response |
+| Sliver | 4 | JARM variants (HTTPS, mTLS, Go) |
+| Metasploit | 2 | JARM (Ruby, Ruby27) |
+| Mythic | 2 | JARM, certificate |
+| EvilGinx2 | 2 | JARM fingerprint |
+| Covenant | 1 | JARM (ASP.NET) |
+| PoshC2 | 1 | JARM (Python3) |
+| Merlin | 1 | JARM (Go) |
+| RATs | 6+ | Default certificates |
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/glitch-cc/infra-hunter.git
+cd infra-hunter
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set API keys
+export SHODAN_API_KEY="your-key"
+export CENSYS_API_KEY="your-key"
+
+# Run scan
+python scan_all.py
+```
+
+## Docker Deployment
+
+```bash
+docker compose up -d
+```
+
+Dashboard available at `http://localhost:5003`
 
 ## Architecture
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Data Sources   │────▶│  Pattern Engine  │────▶│  Alert Pipeline │
-│  - Censys       │     │  - Matching      │     │  - New hosts    │
-│  - CT Logs      │     │  - Clustering    │     │  - Pattern hits │
-│  - Passive DNS  │     │  - Attribution   │     │  - Dashboards   │
+│  Shodan API     │────▶│  Scanner         │────▶│  SQLite DB      │
+│  (JARM queries) │     │  scan_all.py     │     │  infra_hunter.db│
 └─────────────────┘     └──────────────────┘     └─────────────────┘
-         │                       │                        │
-         └───────────────────────┴────────────────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │      PostgreSQL         │
-                    │  - Patterns             │
-                    │  - Hosts                │
-                    │  - Matches              │
-                    │  - Historical data      │
-                    └─────────────────────────┘
+                                │
+┌─────────────────┐             │                 ┌─────────────────┐
+│  Censys API     │─────────────┘                 │  Dashboard      │
+│  (Cert queries) │                               │  dashboard.py   │
+└─────────────────┘                               └─────────────────┘
 ```
 
-## Pattern Types
+## Signatures
 
-### 1. Certificate Patterns
-- Subject DN / Issuer DN templates
-- JARM fingerprints
-- Validity periods
-- Certificate authority preferences
-- Self-signed detection
+Signatures are YAML files in `signatures/library/`:
 
-### 2. HTTP Patterns
-- Status code + header combinations
-- Response body hashes
-- Missing/unusual headers
-- Server software versions
-
-### 3. Hosting Patterns
-- ASN preferences
-- Geographic distribution
-- Provider names
-
-### 4. Domain Patterns
-- WHOIS registrar/privacy patterns
-- Naming conventions (regex)
-- Registration timing clusters
-
-## Known Actor Patterns (Seeded)
-
-| Actor | Pattern Type | Description |
-|-------|-------------|-------------|
-| APT29 | Cert DN | `C=Tunis, O=IT, CN=*` |
-| SideWinder | JARM + HTTP | nginx 404 + specific hash |
-| Lazarus | Cert Subject | Fake Wikipedia pattern |
-| Cobalt Strike | Cert + HTTP | Default cert + no Server header |
-
-## Usage
-
-```bash
-# Scan for hosts matching a pattern
-infra-hunter scan --pattern sidewinder-nginx
-
-# Add a new pattern
-infra-hunter pattern add --name "my-pattern" --type cert_dn --value "C=US, O=Suspicious"
-
-# List matches from last 72h
-infra-hunter matches --hours 72
-
-# Run continuous monitoring
-infra-hunter monitor --interval 6h
-
-# Dashboard
-infra-hunter dashboard --port 5003
+```yaml
+signature:
+  id: cobalt-strike-jarm-default
+  name: Cobalt Strike - JARM Default
+  description: Default JARM fingerprint for Cobalt Strike
+  logic:
+    match: any
+    conditions:
+      - name: JARM Fingerprint
+        type: jarm
+        field: services.tls.jarm.fingerprint
+        operator: equals
+        value: "07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2"
+  queries:
+    shodan: 'ssl.jarm:"07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2"'
 ```
 
-## Installation
+## Related
 
-```bash
-pip install -r requirements.txt
-createdb infra_hunter
-python setup_db.py
-```
-
-## Data Sources
-
-- **Censys** (configured) — Host scanning, certificates
-- **crt.sh** (free) — Certificate Transparency logs
-- **Future:** PassiveTotal, SecurityTrails, WHOIS
+- [Threat Hunting Dataset](https://github.com/glitch-cc/threat-hunting-diy) - Signature browser and management
+- [C2-JARM](https://github.com/cedowens/C2-JARM) - JARM fingerprint research
 
 ## License
 
