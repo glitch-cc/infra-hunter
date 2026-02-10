@@ -13,7 +13,7 @@ signature:
     conditions:
       - name: socgholish_jarm
         type: jarm
-        field: services.jarm.fingerprint
+        field: services.tls.jarm.fingerprint
         operator: equals
         value: "2ad2ad16d2ad2ad0002ad2ad2ad2ad367956b0f7c241e0ae292cd63faf3f5e"
         weight: 70
@@ -44,7 +44,7 @@ signature:
     confidence: medium
     note: SocGholish is operated by TA569, often leads to ransomware
   queries:
-    censys: services.jarm.fingerprint:"2ad2ad16d2ad2ad0002ad2ad2ad2ad367956b0f7c241e0ae292cd63faf3f5e" AND services.tls.certificates.leaf_data.issuer.organization:"Internet Widgits Pty Ltd"
+    censys: services.tls.jarm.fingerprint:"2ad2ad16d2ad2ad0002ad2ad2ad2ad367956b0f7c241e0ae292cd63faf3f5e" AND services.tls.certificates.leaf_data.issuer.organization:"Internet Widgits Pty Ltd"
   references:
     - url: https://medium.com/@t3chi3/unmasking-the-socgholish-infrastructure-using-ssl-jarm-fingerprints-e028e96f56df
       title: Unmasking SocGholish Infrastructure

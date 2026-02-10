@@ -9,7 +9,7 @@ signature:
     conditions:
     - name: Jarm Go
       type: jarm
-      field: services.jarm.fingerprint
+      field: services.tls.jarm.fingerprint
       operator: equals
       value: 2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883
       weight: 60
@@ -28,7 +28,7 @@ signature:
     confidence: low
     note: C2 tool used by multiple actors
   queries:
-    censys: services.jarm.fingerprint:"2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883"
+    censys: services.tls.jarm.fingerprint:"2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883"
     shodan: ssl.jarm:"2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883"
   references:
   - url: https://github.com/cedowens/C2-JARM

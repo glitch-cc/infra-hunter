@@ -12,7 +12,7 @@ signature:
     conditions:
       - name: evilginx_jarm
         type: jarm
-        field: services.jarm.fingerprint
+        field: services.tls.jarm.fingerprint
         operator: equals
         value: "20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
         weight: 80
@@ -31,7 +31,7 @@ signature:
     confidence: low
     note: Popular adversary-in-the-middle framework
   queries:
-    censys: services.jarm.fingerprint:"20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
+    censys: services.tls.jarm.fingerprint:"20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6"
   references:
     - url: https://github.com/kgretzky/evilginx2
       title: Evilginx2 GitHub

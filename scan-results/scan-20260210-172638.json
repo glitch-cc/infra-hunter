@@ -1,0 +1,789 @@
+{
+  "cobalt-strike-default-ssl-cert": {
+    "name": "Cobalt Strike - Default Ssl Cert",
+    "source": "censys",
+    "query": "host.services.cert.fingerprint_sha256:\"87f2085c32b6a2cc709b365f55873e207a9caa10bffecf2fd16d3cf9d94d390c\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "8.152.99.85",
+        "country": "CN",
+        "asn": 37963,
+        "org": "ALIBABA-CN-NET Hangzhou Alibaba Advertising Co.,Ltd."
+      },
+      {
+        "ip": "39.98.51.2",
+        "country": "CN",
+        "asn": 37963,
+        "org": "ALIBABA-CN-NET Hangzhou Alibaba Advertising Co.,Ltd."
+      },
+      {
+        "ip": "154.12.81.103",
+        "country": "HK",
+        "asn": 401696,
+        "org": "COGNETCLOUD - cognetcloud INC"
+      },
+      {
+        "ip": "120.27.211.70",
+        "country": "CN",
+        "asn": 37963,
+        "org": "ALIBABA-CN-NET Hangzhou Alibaba Advertising Co.,Ltd."
+      },
+      {
+        "ip": "43.134.61.180",
+        "country": "SG",
+        "asn": 132203,
+        "org": "TENCENT-NET-AP-CN Tencent Building, Kejizhongyi Avenue"
+      },
+      {
+        "ip": "104.168.4.162",
+        "country": "US",
+        "asn": 36352,
+        "org": "AS-COLOCROSSING - HostPapa"
+      },
+      {
+        "ip": "52.248.41.253",
+        "country": "US",
+        "asn": 8075,
+        "org": "MICROSOFT-CORP-MSN-AS-BLOCK - Microsoft Corporation"
+      },
+      {
+        "ip": "81.70.37.146",
+        "country": "CN",
+        "asn": 45090,
+        "org": "TENCENT-NET-AP Shenzhen Tencent Computer Systems Company Limited"
+      },
+      {
+        "ip": "107.149.192.54",
+        "country": "US",
+        "asn": 398823,
+        "org": "PEG-LA - PEG TECH INC"
+      },
+      {
+        "ip": "198.23.196.130",
+        "country": "US",
+        "asn": 36352,
+        "org": "AS-COLOCROSSING - HostPapa"
+      }
+    ]
+  },
+  "cobalt-strike-jarm-default": {
+    "name": "Cobalt Strike - Jarm Default",
+    "source": "shodan",
+    "query": "ssl.jarm:\"07d14d16d21d21d00042d41d00041de5fb3038104f457d92ba02e9311512c2\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "183.111.136.94",
+        "country": "KR",
+        "org": "Korea Telecom"
+      },
+      {
+        "ip": "52.224.204.187",
+        "country": "US",
+        "org": "Microsoft Corporation"
+      },
+      {
+        "ip": "94.201.94.133",
+        "country": "AE",
+        "org": "Emirates Integrated Telecommunications Company PJSC (EITC-DU)"
+      },
+      {
+        "ip": "152.67.136.57",
+        "country": "GB",
+        "org": "Oracle Public Cloud"
+      },
+      {
+        "ip": "59.190.149.26",
+        "country": "JP",
+        "org": "OPTAGE Inc."
+      },
+      {
+        "ip": "166.64.0.60",
+        "country": "AU",
+        "org": null
+      },
+      {
+        "ip": "185.209.100.56",
+        "country": "ES",
+        "org": "European Fisheries Control Agency"
+      },
+      {
+        "ip": "110.41.159.223",
+        "country": "CN",
+        "org": "Huawei Public Cloud Service (Huawei Software Technologies Ltd.Co)"
+      },
+      {
+        "ip": "185.127.1.125",
+        "country": "LT",
+        "org": "KVTC"
+      },
+      {
+        "ip": "20.54.111.99",
+        "country": "IE",
+        "org": "Microsoft Corporation"
+      }
+    ]
+  },
+  "cobalt-strike-jarm-java11": {
+    "name": "Cobalt Strike - Jarm Java11",
+    "source": "shodan",
+    "query": "ssl.jarm:\"07d14d16d21d21d07c42d41d00041d24a458a375eef0c576d23a7bab9a9fb1\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "123.212.238.208",
+        "country": "KR",
+        "org": "SK Broadband Co Ltd"
+      },
+      {
+        "ip": "211.46.83.120",
+        "country": "KR",
+        "org": "Korea Telecom"
+      },
+      {
+        "ip": "58.224.118.209",
+        "country": "KR",
+        "org": "SK Broadband Co Ltd"
+      },
+      {
+        "ip": "211.117.60.102",
+        "country": "KR",
+        "org": "SK Broadband Co Ltd"
+      },
+      {
+        "ip": "137.187.173.150",
+        "country": "US",
+        "org": "National Institutes of Health"
+      },
+      {
+        "ip": "137.187.173.139",
+        "country": "US",
+        "org": "National Institutes of Health"
+      },
+      {
+        "ip": "194.187.108.150",
+        "country": "UA",
+        "org": "KIEVLINE LLC"
+      },
+      {
+        "ip": "1.234.82.71",
+        "country": "KR",
+        "org": "SK Broadband Co Ltd"
+      },
+      {
+        "ip": "125.129.247.207",
+        "country": "KR",
+        "org": "Korea Telecom"
+      },
+      {
+        "ip": "186.130.131.62",
+        "country": "AR",
+        "org": "Telefonica de Argentina"
+      }
+    ]
+  },
+  "covenant-jarm-aspnet": {
+    "name": "Covenant - Jarm Aspnet",
+    "source": "shodan",
+    "query": "ssl.jarm:\"21d14d00000000021c21d14d21d21d1ee8ae98bf3ef941e91529a93ac62b8b\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "161.97.164.129",
+        "country": "DE",
+        "org": "Contabo GmbH"
+      },
+      {
+        "ip": "140.179.169.19",
+        "country": "CN",
+        "org": "Beijing Sinnet Technology Co., Ltd."
+      },
+      {
+        "ip": "104.45.66.16",
+        "country": "NL",
+        "org": "Microsoft Corporation"
+      },
+      {
+        "ip": "52.81.156.19",
+        "country": "CN",
+        "org": "Beijing Sinnet Technology Co., Ltd."
+      },
+      {
+        "ip": "85.22.156.122",
+        "country": "DE",
+        "org": "flex|pos GmbH & Co. KG"
+      },
+      {
+        "ip": "122.155.184.185",
+        "country": "TH",
+        "org": "CAT Telecom public company Ltd"
+      },
+      {
+        "ip": "85.22.156.122",
+        "country": "DE",
+        "org": "flex|pos GmbH & Co. KG"
+      },
+      {
+        "ip": "20.201.0.231",
+        "country": "BR",
+        "org": "Microsoft Corporation"
+      },
+      {
+        "ip": "104.199.13.91",
+        "country": "BE",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "20.54.128.255",
+        "country": "NL",
+        "org": "Microsoft Corporation"
+      }
+    ]
+  },
+  "deimos-jarm-go-websocket": {
+    "name": "DeimosC2 - Jarm Go Websocket",
+    "source": "shodan",
+    "query": "ssl.jarm:\"00000000000000000041d00000041d9535d5979f591ae8e547c5e5743e5b64\"",
+    "count": 3,
+    "hosts": [
+      {
+        "ip": "106.75.229.132",
+        "country": "CN",
+        "org": "Shanghai UCloud Information Technology Company Limited"
+      },
+      {
+        "ip": "34.241.19.243",
+        "country": "IE",
+        "org": "Amazon Data Services Ireland Limited"
+      },
+      {
+        "ip": "52.18.239.4",
+        "country": "IE",
+        "org": "Amazon Data Services Ireland Limited"
+      }
+    ]
+  },
+  "evilginx2-jarm-go": {
+    "name": "EvilGinx2 - Jarm Go",
+    "source": "shodan",
+    "query": "ssl.jarm:\"20d14d20d21d20d20c20d14d20d20daddf8a68a1444c74b6dbe09910a511e6\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "47.107.181.167",
+        "country": "CN",
+        "org": "Aliyun Computing Co., LTD"
+      },
+      {
+        "ip": "133.4.190.46",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "133.4.190.52",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "133.4.190.34",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "115.159.112.118",
+        "country": "CN",
+        "org": "Tencent cloud computing (Beijing) Co., Ltd."
+      },
+      {
+        "ip": "133.4.190.56",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "133.4.190.41",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "133.4.190.39",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "133.4.190.62",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      },
+      {
+        "ip": "133.4.190.32",
+        "country": "JP",
+        "org": "Japan Network Information Center"
+      }
+    ]
+  },
+  "merlin-jarm-go": {
+    "name": "Merlin - Jarm Go",
+    "source": "shodan",
+    "query": "ssl.jarm:\"29d21b20d29d29d21c41d21b21b41d494e0df9532e75299f15ba73156cee38\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "68.220.41.134",
+        "country": "US",
+        "org": "Microsoft Corporation"
+      },
+      {
+        "ip": "35.221.32.209",
+        "country": "US",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "108.160.140.165",
+        "country": "JP",
+        "org": "Vultr Holdings, LLC"
+      },
+      {
+        "ip": "79.101.30.88",
+        "country": "RS",
+        "org": "RATEL,Beograd, Visnjiceva 8"
+      },
+      {
+        "ip": "193.1.12.245",
+        "country": "IE",
+        "org": "Measurement Lab Testbed Network"
+      },
+      {
+        "ip": "35.231.159.89",
+        "country": "US",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "3.22.103.96",
+        "country": "US",
+        "org": "Amazon Technologies Inc."
+      },
+      {
+        "ip": "91.213.30.219",
+        "country": "ES",
+        "org": "Consorci de Serveis Universitaris de Catalunya"
+      },
+      {
+        "ip": "44.233.74.156",
+        "country": "US",
+        "org": "Amazon.com, Inc."
+      },
+      {
+        "ip": "68.220.41.83",
+        "country": "US",
+        "org": "Microsoft Corporation"
+      }
+    ]
+  },
+  "metasploit-jarm-ruby": {
+    "name": "Metasploit - Jarm Ruby",
+    "source": "shodan",
+    "query": "ssl.jarm:\"07d14d16d21d21d07c42d43d000000f50d155305214cf247147c43c0f1a823\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "218.193.161.49",
+        "country": "CN",
+        "org": "China Education and Research Network"
+      },
+      {
+        "ip": "112.120.103.2",
+        "country": "HK",
+        "org": "Hong Kong Telecommunications (HKT) Limited Mass Internet"
+      },
+      {
+        "ip": "195.42.143.73",
+        "country": "BG",
+        "org": "ICDSoft Ltd."
+      },
+      {
+        "ip": "140.114.245.10",
+        "country": "TW",
+        "org": "Ministry of Education Computer Center"
+      },
+      {
+        "ip": "153.92.78.138",
+        "country": "DE",
+        "org": "e.discom Telekommunikation GmbH"
+      },
+      {
+        "ip": "66.119.96.27",
+        "country": "US",
+        "org": "Blue Ridge Mountain Electric Membership Corporation - BRM EMC"
+      },
+      {
+        "ip": "140.114.245.43",
+        "country": "TW",
+        "org": "Ministry of Education Computer Center"
+      },
+      {
+        "ip": "140.114.245.44",
+        "country": "TW",
+        "org": "Ministry of Education Computer Center"
+      },
+      {
+        "ip": "140.114.245.40",
+        "country": "TW",
+        "org": "Ministry of Education Computer Center"
+      },
+      {
+        "ip": "34.47.211.5",
+        "country": "IN",
+        "org": "Google LLC"
+      }
+    ]
+  },
+  "metasploit-jarm-ruby27": {
+    "name": "Metasploit - Jarm Ruby27",
+    "source": "shodan",
+    "query": "ssl.jarm:\"07d14d16d21d21d00042d43d000000aa99ce74e2c6d013c745aa52b5cc042d\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "212.117.109.211",
+        "country": "CH",
+        "org": "Liceo Locarno"
+      },
+      {
+        "ip": "47.247.44.149",
+        "country": "IN",
+        "org": "Reliance Jio Infocomm Limited"
+      },
+      {
+        "ip": "59.154.239.79",
+        "country": "AU",
+        "org": "SingTel Optus Pty Ltd"
+      },
+      {
+        "ip": "137.97.92.176",
+        "country": "IN",
+        "org": "Reliance Jio Infocomm Limited"
+      },
+      {
+        "ip": "217.244.188.25",
+        "country": "DE",
+        "org": "Deutsche Telekom AG"
+      },
+      {
+        "ip": "195.149.112.1",
+        "country": "UA",
+        "org": "Olga Soroka"
+      },
+      {
+        "ip": "219.112.65.218",
+        "country": "JP",
+        "org": "FreeBit Co., Ltd."
+      },
+      {
+        "ip": "219.112.68.138",
+        "country": "JP",
+        "org": "FreeBit Co., Ltd."
+      },
+      {
+        "ip": "115.241.95.74",
+        "country": "IN",
+        "org": "Reliance Jio Infocomm Limited"
+      },
+      {
+        "ip": "219.112.65.186",
+        "country": "JP",
+        "org": "FreeBit Co., Ltd."
+      }
+    ]
+  },
+  "mythic-jarm-aiohttp": {
+    "name": "Mythic - Jarm Aiohttp",
+    "source": "shodan",
+    "query": "ssl.jarm:\"2ad2ad0002ad2ad00042d42d000000ad9bf51cc3f5a1e29eecb81d0c7b06eb\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "89.45.236.143",
+        "country": "SE",
+        "org": "Vetenskapsradet / SUNET"
+      },
+      {
+        "ip": "4.234.115.168",
+        "country": "GB",
+        "org": "Microsoft Corporation"
+      },
+      {
+        "ip": "195.76.14.186",
+        "country": "ES",
+        "org": "HOTELES DE ALTA MONTANA S.A."
+      },
+      {
+        "ip": "216.26.112.175",
+        "country": "US",
+        "org": "Airstream Communications, LLC"
+      },
+      {
+        "ip": "72.142.79.50",
+        "country": "CA",
+        "org": "Rogers Communications Canada Inc."
+      },
+      {
+        "ip": "89.249.219.114",
+        "country": "LB",
+        "org": "WISE Wireless Internet So Easy ...!"
+      },
+      {
+        "ip": "12.10.154.146",
+        "country": "US",
+        "org": "AT&T Enterprises, LLC"
+      },
+      {
+        "ip": "64.6.123.18",
+        "country": "US",
+        "org": "WTC Communications, Inc."
+      },
+      {
+        "ip": "88.157.233.66",
+        "country": "PT",
+        "org": "Azimute Virtual Lda"
+      },
+      {
+        "ip": "103.114.210.146",
+        "country": "IN",
+        "org": "SKYLINK NETWORKS"
+      }
+    ]
+  },
+  "poshc2-jarm-python3": {
+    "name": "PoshC2 - Jarm Python3",
+    "source": "shodan",
+    "query": "ssl.jarm:\"2ad2ad0002ad2ad22c42d42d000000faabb8fd156aa8b4d8a37853e1063261\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "102.88.18.155",
+        "country": "NG",
+        "org": "MTN Nigeria"
+      },
+      {
+        "ip": "72.14.179.121",
+        "country": "US",
+        "org": "Linode"
+      },
+      {
+        "ip": "5.61.242.125",
+        "country": "HU",
+        "org": "MVM NET Zrt."
+      },
+      {
+        "ip": "47.254.247.28",
+        "country": "MY",
+        "org": "Alibaba Cloud - MY"
+      },
+      {
+        "ip": "154.16.240.253",
+        "country": "US",
+        "org": "Digital Energy Technologies Limited"
+      },
+      {
+        "ip": "189.80.94.54",
+        "country": "BR",
+        "org": "V tal"
+      },
+      {
+        "ip": "46.38.231.88",
+        "country": "DE",
+        "org": "netcup GmbH"
+      },
+      {
+        "ip": "93.89.159.21",
+        "country": "CZ",
+        "org": "GRADACE, spol. s r.o."
+      },
+      {
+        "ip": "122.9.136.45",
+        "country": "CN",
+        "org": "Huawei Public Cloud Service (Huawei Software Technologies Ltd.Co)"
+      },
+      {
+        "ip": "199.247.218.77",
+        "country": "CA",
+        "org": "Hearst Connect Corporation"
+      }
+    ]
+  },
+  "sliver-jarm-go": {
+    "name": "Sliver - Jarm Go",
+    "source": "shodan",
+    "query": "ssl.jarm:\"2ad2ad0002ad2ad00041d2ad2ad41da5207249a18099be84ef3c8811adc883\"",
+    "count": 25,
+    "hosts": [
+      {
+        "ip": "176.31.21.16",
+        "country": "FR",
+        "org": "OVH Hispano"
+      },
+      {
+        "ip": "148.251.245.114",
+        "country": "DE",
+        "org": "Hetzner Online GmbH"
+      },
+      {
+        "ip": "31.147.204.196",
+        "country": "HR",
+        "org": "Sveucilisni racunski centar"
+      },
+      {
+        "ip": "35.240.143.100",
+        "country": "SG",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "34.91.49.121",
+        "country": "NL",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "192.95.19.98",
+        "country": "CA",
+        "org": "OVH Hosting, Inc."
+      },
+      {
+        "ip": "162.55.173.180",
+        "country": "DE",
+        "org": "Hetzner Online GmbH"
+      },
+      {
+        "ip": "144.76.117.151",
+        "country": "DE",
+        "org": "Hetzner Online GmbH"
+      },
+      {
+        "ip": "35.198.225.38",
+        "country": "SG",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "154.53.35.50",
+        "country": "US",
+        "org": "Contabo Inc"
+      }
+    ]
+  },
+  "sliver-jarm-https": {
+    "name": "Sliver - Jarm Https",
+    "source": "shodan",
+    "query": "ssl.jarm:\"3fd21b20d00000021c43d21b21b43d41226dd5dfc615dd4a96265559485910\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "202.155.140.25",
+        "country": "HK",
+        "org": "Arisk Communications inc."
+      },
+      {
+        "ip": "172.237.11.218",
+        "country": "JP",
+        "org": "Linode"
+      },
+      {
+        "ip": "209.170.79.24",
+        "country": "BG",
+        "org": "Google Ireland Limited"
+      },
+      {
+        "ip": "163.7.129.114",
+        "country": "NZ",
+        "org": "Research and Education Advanced Network New Zealand"
+      },
+      {
+        "ip": "163.7.129.50",
+        "country": "NZ",
+        "org": "Research and Education Advanced Network New Zealand"
+      },
+      {
+        "ip": "103.43.213.139",
+        "country": "PH",
+        "org": "OPL Building, C Palanca St, Legaspi Village, Makati City"
+      },
+      {
+        "ip": "163.7.129.101",
+        "country": "NZ",
+        "org": "Research and Education Advanced Network New Zealand"
+      },
+      {
+        "ip": "34.131.16.134",
+        "country": "IN",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "76.74.83.203",
+        "country": "CA",
+        "org": "Google"
+      },
+      {
+        "ip": "102.88.1.139",
+        "country": "NG",
+        "org": "MTNNG-IKOYI-CUSTINTERNET"
+      }
+    ]
+  },
+  "sliver-jarm-mtls": {
+    "name": "Sliver - Jarm Mtls",
+    "source": "shodan",
+    "query": "ssl.jarm:\"00000000000000000043d43d00043de2a97eabb398317329f027c66e4c1b01\"",
+    "count": 50,
+    "hosts": [
+      {
+        "ip": "216.105.38.30",
+        "country": "US",
+        "org": "Internet Express"
+      },
+      {
+        "ip": "51.159.85.156",
+        "country": "FR",
+        "org": "Scaleway"
+      },
+      {
+        "ip": "34.87.24.96",
+        "country": "SG",
+        "org": "Google LLC"
+      },
+      {
+        "ip": "51.159.204.137",
+        "country": "FR",
+        "org": "Scaleway"
+      },
+      {
+        "ip": "193.31.28.44",
+        "country": "DE",
+        "org": "DeinServerHost"
+      },
+      {
+        "ip": "163.116.230.76",
+        "country": "BR",
+        "org": "Netskope Inc."
+      },
+      {
+        "ip": "138.68.180.119",
+        "country": "GB",
+        "org": "DigitalOcean, LLC"
+      },
+      {
+        "ip": "88.218.0.8",
+        "country": "GB",
+        "org": "M247 Ltd Manchester"
+      },
+      {
+        "ip": "77.237.233.73",
+        "country": "DE",
+        "org": "Contabo GmbH"
+      },
+      {
+        "ip": "143.198.16.180",
+        "country": "US",
+        "org": "DigitalOcean, LLC"
+      }
+    ]
+  }
+}

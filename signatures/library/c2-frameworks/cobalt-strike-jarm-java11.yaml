@@ -10,7 +10,7 @@ signature:
     conditions:
     - name: Jarm Java11
       type: jarm
-      field: services.jarm.fingerprint
+      field: services.tls.jarm.fingerprint
       operator: equals
       value: 07d14d16d21d21d07c42d41d00041d24a458a375eef0c576d23a7bab9a9fb1
       weight: 60
@@ -32,7 +32,7 @@ signature:
     confidence: low
     note: C2 tool used by multiple actors
   queries:
-    censys: services.jarm.fingerprint:"07d14d16d21d21d07c42d41d00041d24a458a375eef0c576d23a7bab9a9fb1"
+    censys: services.tls.jarm.fingerprint:"07d14d16d21d21d07c42d41d00041d24a458a375eef0c576d23a7bab9a9fb1"
     shodan: ssl.jarm:"07d14d16d21d21d07c42d41d00041d24a458a375eef0c576d23a7bab9a9fb1"
   references:
   - url: https://github.com/cedowens/C2-JARM

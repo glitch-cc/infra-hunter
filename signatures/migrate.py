@@ -31,7 +31,7 @@ def migrate_c2_frameworks(mgr: SignatureManager) -> int:
             sig_type = sig_data['type']
             if sig_type == 'jarm':
                 cond_type = 'jarm'
-                cond_field = 'services.jarm.fingerprint'
+                cond_field = 'services.tls.jarm.fingerprint'
                 cond_value = sig_data['fingerprint']
             elif sig_type == 'cert_fingerprint':
                 cond_type = 'cert_fingerprint'
