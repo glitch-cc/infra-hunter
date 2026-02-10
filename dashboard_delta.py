@@ -10,7 +10,17 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template_string, jsonify, request
 
 app = Flask(__name__)
-DB_PATH = os.environ.get('INFRA_HUNTER_DB', 'infra_hunter.db')
+
+# Handle SQLAlchemy-style URI or plain path
+_db_env = os.environ.get('INFRA_HUNTER_DB', 'infra_hunter.db')
+if _db_env.startswith('sqlite:///'):
+    DB_PATH = _db_env.replace('sqlite:///', '')
+else:
+    DB_PATH = _db_env
+
+# Make path absolute if needed
+if not DB_PATH.startswith('/'):
+    DB_PATH = os.path.join(os.path.dirname(__file__), DB_PATH)
 
 # ============== STYLES ==============
 
