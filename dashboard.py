@@ -240,6 +240,7 @@ TEMPLATE = '''
                                 <th>Confidence</th>
                                 <th>Matches</th>
                                 <th>Last Match</th>
+                                <th>IOCs</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -257,6 +258,13 @@ TEMPLATE = '''
                                 <td><span class="badge badge-{{ p.confidence }}">{{ p.confidence }}</span></td>
                                 <td>{{ p.total_matches }}</td>
                                 <td>{{ p.last_match_at.strftime('%Y-%m-%d') if p.last_match_at else 'Never' }}</td>
+                                <td>
+                                    {% if p.total_matches > 0 %}
+                                    <a href="/api/pattern/{{ p.id }}/stix" style="color:#58a6ff;font-size:0.85em;">📥 STIX</a>
+                                    {% else %}
+                                    <span style="color:#8b949e;font-size:0.85em;">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -1093,6 +1101,151 @@ def api_signature_detail(sig_id):
         return jsonify({'error': 'Not found'}), 404
     
     return jsonify(sig.to_dict())
+
+
+# =============================================================================
+# STIX EXPORT
+# =============================================================================
+
+import uuid
+from flask import Response
+
+def generate_stix_bundle(pattern, hosts):
+    """Generate a STIX 2.1 bundle for a pattern's matched hosts."""
+    bundle_id = f"bundle--{uuid.uuid4()}"
+    now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    
+    objects = []
+    
+    # Create the pattern as a Malware object (for attribution context)
+    if pattern.actor:
+        threat_actor = {
+            "type": "threat-actor",
+            "spec_version": "2.1",
+            "id": f"threat-actor--{uuid.uuid5(uuid.NAMESPACE_DNS, pattern.actor.name)}",
+            "created": now,
+            "modified": now,
+            "name": pattern.actor.name,
+            "description": pattern.actor.description or f"Threat actor tracked by Infrastructure Hunter",
+            "aliases": pattern.actor.aliases or [],
+            "threat_actor_types": ["unknown"],
+        }
+        if pattern.actor.country:
+            threat_actor["country"] = pattern.actor.country
+        objects.append(threat_actor)
+    
+    # Create Infrastructure object for the pattern
+    infra = {
+        "type": "infrastructure",
+        "spec_version": "2.1",
+        "id": f"infrastructure--{uuid.uuid5(uuid.NAMESPACE_DNS, f'infra-hunter-{pattern.id}')}",
+        "created": now,
+        "modified": now,
+        "name": pattern.name,
+        "description": pattern.description or f"C2 infrastructure detected by pattern: {pattern.pattern_type}",
+        "infrastructure_types": ["command-and-control"],
+    }
+    objects.append(infra)
+    
+    # Create Indicator for each host IP
+    ip_values = []
+    for host in hosts:
+        indicator_id = f"indicator--{uuid.uuid5(uuid.NAMESPACE_DNS, f'{pattern.id}-{host.ip}')}"
+        ip_values.append(host.ip)
+        
+        indicator = {
+            "type": "indicator",
+            "spec_version": "2.1",
+            "id": indicator_id,
+            "created": host.first_seen.strftime('%Y-%m-%dT%H:%M:%S.000Z') if host.first_seen else now,
+            "modified": now,
+            "name": f"{pattern.name} - {host.ip}",
+            "description": f"C2 infrastructure IP detected via {pattern.pattern_type}",
+            "indicator_types": ["malicious-activity", "attribution"],
+            "pattern": f"[ipv4-addr:value = '{host.ip}']",
+            "pattern_type": "stix",
+            "valid_from": host.first_seen.strftime('%Y-%m-%dT%H:%M:%S.000Z') if host.first_seen else now,
+            "labels": ["c2", pattern.pattern_type],
+        }
+        
+        # Add extra context
+        if host.country:
+            indicator["labels"].append(f"country:{host.country}")
+        if host.asn_name:
+            indicator["labels"].append(f"asn:{host.asn_name[:50]}")
+        if host.jarm:
+            indicator["labels"].append(f"jarm:{host.jarm[:16]}")
+        
+        objects.append(indicator)
+        
+        # Relationship: indicator -> infrastructure
+        rel = {
+            "type": "relationship",
+            "spec_version": "2.1",
+            "id": f"relationship--{uuid.uuid4()}",
+            "created": now,
+            "modified": now,
+            "relationship_type": "indicates",
+            "source_ref": indicator_id,
+            "target_ref": infra["id"],
+        }
+        objects.append(rel)
+    
+    # Link infrastructure to actor if present
+    if pattern.actor:
+        rel = {
+            "type": "relationship",
+            "spec_version": "2.1",
+            "id": f"relationship--{uuid.uuid4()}",
+            "created": now,
+            "modified": now,
+            "relationship_type": "attributed-to",
+            "source_ref": infra["id"],
+            "target_ref": f"threat-actor--{uuid.uuid5(uuid.NAMESPACE_DNS, pattern.actor.name)}",
+        }
+        objects.append(rel)
+    
+    bundle = {
+        "type": "bundle",
+        "id": bundle_id,
+        "objects": objects,
+    }
+    
+    return bundle
+
+
+@app.route('/api/pattern/<int:pattern_id>/stix')
+def api_pattern_stix(pattern_id):
+    """Download STIX 2.1 bundle for a pattern's matched hosts."""
+    import json
+    
+    db_url = os.environ.get('INFRA_HUNTER_DB', 'postgresql://localhost/infra_hunter')
+    session = get_session(get_engine(db_url))
+    
+    try:
+        pattern = session.query(Pattern).get(pattern_id)
+        if not pattern:
+            return jsonify({'error': 'Pattern not found'}), 404
+        
+        # Get all hosts that matched this pattern
+        matches = session.query(Match).filter_by(pattern_id=pattern_id).all()
+        hosts = [m.host for m in matches]
+        
+        if not hosts:
+            return jsonify({'error': 'No hosts found for this pattern'}), 404
+        
+        bundle = generate_stix_bundle(pattern, hosts)
+        
+        # Return as downloadable JSON file
+        filename = f"infra-hunter-{pattern.name.lower().replace(' ', '-')}-stix.json"
+        
+        return Response(
+            json.dumps(bundle, indent=2),
+            mimetype='application/json',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        )
+    finally:
+        session.close()
 
 
 def run_dashboard(host='0.0.0.0', port=5003):
