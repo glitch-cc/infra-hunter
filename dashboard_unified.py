@@ -1180,7 +1180,8 @@ TEMPLATE = '''
 
 @app.route('/')
 def index():
-    return render_template_string(TEMPLATE)
+    resp = Response(render_template_string(TEMPLATE), content_type='text/html; charset=utf-8')
+    return resp
 
 
 @app.route('/api/delta')
