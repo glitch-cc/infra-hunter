@@ -1295,10 +1295,13 @@ def api_host_deepdive(ip):
         if censys_token:
             import urllib.request
             import urllib.error
+            import base64
             
             url = f'https://search.censys.io/api/v2/hosts/{ip}'
             req = urllib.request.Request(url)
-            req.add_header('Authorization', f'Bearer {censys_token}')
+            # Censys Platform API uses the token as both user and pass for Basic auth
+            auth_string = base64.b64encode(f'{censys_token}:{censys_token}'.encode()).decode()
+            req.add_header('Authorization', f'Basic {auth_string}')
             req.add_header('Accept', 'application/json')
             
             try:
