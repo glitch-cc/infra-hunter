@@ -1086,7 +1086,7 @@ TEMPLATE = '''
                     html += '<div style="margin:12px 0;"><span class="label">Standard Security Emails:</span>';
                     html += '<div class="standard-emails">';
                     data.standard_emails.forEach(e => {
-                        html += '<span class="standard-email" onclick="copyToClipboard(\'' + e.email + '\')" title="Click to copy">' + e.email + '</span>';
+                        html += '<span class="standard-email" onclick="copyToClipboard(\\'' + e.email + '\\')" title="Click to copy">' + e.email + '</span>';
                     });
                     html += '</div></div>';
                 }
