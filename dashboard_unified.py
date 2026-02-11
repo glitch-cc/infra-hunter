@@ -1745,11 +1745,18 @@ def api_org_contacts(org_name):
                         'industry': company_data.get('industry')
                     }
                     
-                    # Search for security employees
+                    # Search for security and IT employees
                     linkedin_url = company_data.get('linkedin_url')
                     if linkedin_url:
-                        for role in ['CISO', 'Chief Information Security', 'Security Director', 
-                                    'Information Security', 'Incident Response', 'Security Operations']:
+                        # Security roles first, then IT roles
+                        security_roles = ['CISO', 'Chief Information Security', 'Security Director', 
+                                         'Information Security', 'Incident Response', 'Security Operations',
+                                         'Cybersecurity', 'Threat Intelligence', 'SOC Manager']
+                        it_roles = ['CIO', 'Chief Information Officer', 'IT Director', 'VP IT',
+                                   'Director of IT', 'IT Manager', 'Infrastructure Manager',
+                                   'Network Director', 'Systems Director', 'CTO', 'Chief Technology']
+                        
+                        for role in security_roles + it_roles:
                             try:
                                 emp_resp = req.post(
                                     'https://fresh-linkedin-profile-data.p.rapidapi.com/search-employees',
@@ -1772,16 +1779,22 @@ def api_org_contacts(org_name):
                                         # Check if already have this person
                                         emp_linkedin = emp.get('linkedin_url')
                                         if emp_linkedin and not any(c.get('linkedin') == emp_linkedin for c in result['contacts']):
+                                            is_security = role in security_roles
                                             contact = {
                                                 'first_name': emp.get('first_name'),
                                                 'last_name': emp.get('last_name'),
                                                 'position': emp.get('title'),
                                                 'linkedin': emp_linkedin,
-                                                'is_security_role': True,
+                                                'is_security_role': is_security,
+                                                'is_it_role': not is_security,
                                                 'source': 'LinkedIn',
                                                 'profile_picture': emp.get('profile_picture')
                                             }
-                                            result['contacts'].insert(0, contact)
+                                            # Security at top, IT after
+                                            if is_security:
+                                                result['contacts'].insert(0, contact)
+                                            else:
+                                                result['contacts'].append(contact)
                             except:
                                 pass  # Continue with next role
             except Exception as e:
