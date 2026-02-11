@@ -1289,25 +1289,33 @@ def api_host_deepdive(ip):
         'risk_factors': []
     }
     
-    # Try to get Censys data
+    # Try to get Censys data using cencli (handles auth properly)
     try:
-        censys_token = os.environ.get('CENSYS_API_TOKEN') or os.environ.get('CENSYS_API_KEY')
-        if censys_token:
-            import urllib.request
-            import urllib.error
-            import base64
-            
-            url = f'https://search.censys.io/api/v2/hosts/{ip}'
-            req = urllib.request.Request(url)
-            # Censys Platform API uses the token as both user and pass for Basic auth
-            auth_string = base64.b64encode(f'{censys_token}:{censys_token}'.encode()).decode()
-            req.add_header('Authorization', f'Basic {auth_string}')
-            req.add_header('Accept', 'application/json')
-            
-            try:
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    censys_data = json.loads(resp.read().decode())
-                    host_data = censys_data.get('result', {})
+        import subprocess
+        
+        # Find cencli - check local path first, then system path
+        cencli_paths = ['/app/cencli', '/usr/local/bin/cencli', 'cencli']
+        cencli_cmd = None
+        for path in cencli_paths:
+            if os.path.exists(path):
+                cencli_cmd = path
+                break
+        
+        if not cencli_cmd:
+            result['censys_error'] = 'cencli not found'
+        else:
+            # Run cencli to get host data
+            proc = subprocess.run(
+                [cencli_cmd, 'view', ip, '-O', 'json'],
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+        
+            if proc.returncode == 0 and proc.stdout:
+                censys_data = json.loads(proc.stdout)
+                if isinstance(censys_data, list) and len(censys_data) > 0:
+                    host_data = censys_data[0]
                     
                     # Extract ASN info
                     if 'autonomous_system' in host_data:
@@ -1363,11 +1371,12 @@ def api_host_deepdive(ip):
                         services.append(service_info)
                     
                     result['services'] = services
-                    
-            except urllib.error.HTTPError as e:
-                result['censys_error'] = f'HTTP {e.code}'
-            except Exception as e:
-                result['censys_error'] = str(e)
+            else:
+                result['censys_error'] = proc.stderr or 'cencli failed'
+    except subprocess.TimeoutExpired:
+        result['censys_error'] = 'Censys lookup timed out'
+    except FileNotFoundError:
+        result['censys_error'] = 'cencli not installed'
     except Exception as e:
         result['censys_error'] = str(e)
     
