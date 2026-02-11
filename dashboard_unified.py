@@ -833,7 +833,7 @@ TEMPLATE = '''
         
         // Set STIX download link
         if (data.pattern_id && data.count > 0) {
-            document.getElementById('modal-stix-link').href = '/api/pattern/' + data.pattern_id + '/stix';
+            document.getElementById('modal-stix-link').href = 'api/pattern/' + data.pattern_id + '/stix';
             document.getElementById('modal-stix-link').style.display = 'inline';
         } else {
             document.getElementById('modal-stix-link').style.display = 'none';
@@ -882,7 +882,7 @@ TEMPLATE = '''
         body.innerHTML = '<div class="loading-spinner">🔍 Fetching intel for ' + ip + '...</div>';
         
         try {
-            const resp = await fetch('/api/host/' + ip + '/deepdive');
+            const resp = await fetch('api/host/' + ip + '/deepdive');
             const data = await resp.json();
             
             if (data.error) {
