@@ -326,6 +326,148 @@ TEMPLATE = '''
             .delta-grid { grid-template-columns: repeat(2, 1fr); }
             .header { flex-direction: column; gap: 15px; }
         }
+        
+        /* Deep Dive Side Panel */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 500px;
+            height: 100vh;
+            background: #161b22;
+            border-left: 1px solid #30363d;
+            z-index: 1001;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+        }
+        .side-panel.active { right: 0; }
+        .side-panel-header {
+            padding: 16px 20px;
+            background: #21262d;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .side-panel-header h3 { color: #f0f6fc; font-size: 1.1em; }
+        .side-panel-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .side-panel-close:hover { color: #f0f6fc; }
+        .side-panel-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .side-panel-actions {
+            padding: 16px 20px;
+            background: #21262d;
+            border-top: 1px solid #30363d;
+            display: flex;
+            gap: 10px;
+        }
+        .side-panel-actions button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #21262d;
+            color: #c9d1d9;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .side-panel-actions button:hover { background: #30363d; }
+        .side-panel-actions button.primary {
+            background: #238636;
+            border-color: #238636;
+            color: white;
+        }
+        .side-panel-actions button.primary:hover { background: #2ea043; }
+        
+        .deep-dive-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+        }
+        .deep-dive-section:last-child { border-bottom: none; }
+        .deep-dive-section h4 {
+            color: #58a6ff;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .deep-dive-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9em;
+        }
+        .deep-dive-row .label { color: #8b949e; }
+        .deep-dive-row .value { color: #f0f6fc; font-family: monospace; }
+        .deep-dive-row .value.warn { color: #d29922; }
+        .deep-dive-row .value.danger { color: #f85149; }
+        .deep-dive-row .value.safe { color: #3fb950; }
+        
+        .service-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .service-card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .service-port { color: #79c0ff; font-weight: bold; }
+        .service-proto { color: #8b949e; font-size: 0.85em; }
+        .service-details { font-size: 0.85em; color: #8b949e; }
+        .service-details code {
+            background: #21262d;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            color: #c9d1d9;
+        }
+        
+        .ip-link {
+            color: #79c0ff;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .ip-link:hover { text-decoration: underline; }
+        
+        .jarm-display {
+            font-family: monospace;
+            font-size: 0.75em;
+            word-break: break-all;
+            background: #0d1117;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+        
+        .side-panel-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .side-panel-overlay.active { display: block; }
     </style>
 </head>
 <body>
@@ -586,7 +728,7 @@ TEMPLATE = '''
         // New hosts table
         const newHostsHtml = (delta.new_hosts || []).slice(0, 50).map(h => `
             <tr>
-                <td class="ip">${h.ip}</td>
+                <td class="ip"><span class="ip-link" onclick="openDeepDive('${h.ip}')">${h.ip}</span></td>
                 <td class="country">${h.country || '??'}</td>
                 <td>${(h.asn_name || h.org || '').substring(0, 35)}</td>
                 <td>${(h.patterns || []).map(p => '<span class="pattern-tag">' + p + '</span>').join('')}</td>
@@ -599,7 +741,7 @@ TEMPLATE = '''
         document.getElementById('hosts-badge').textContent = hosts.total || 0;
         const hostsHtml = (hosts.hosts || []).map(h => `
             <tr>
-                <td class="ip">${h.ip}</td>
+                <td class="ip"><span class="ip-link" onclick="openDeepDive('${h.ip}')">${h.ip}</span></td>
                 <td class="country">${h.country || '??'}</td>
                 <td>${(h.asn_name || '').substring(0, 35)}</td>
                 <td>${(h.patterns || []).map(p => '<span class="pattern-tag">' + p + '</span>').join('')}</td>
@@ -701,7 +843,7 @@ TEMPLATE = '''
         
         const hostsHtml = (data.hosts || []).map(h => `
             <tr>
-                <td class="ip">${h.ip}</td>
+                <td class="ip"><span class="ip-link" onclick="openDeepDive('${h.ip}')">${h.ip}</span></td>
                 <td class="country">${h.country || '??'}</td>
                 <td>${(h.asn_name || '').substring(0, 40)}</td>
                 <td>${formatTime(h.first_seen)}</td>
@@ -717,11 +859,157 @@ TEMPLATE = '''
     }
     
     // Close modal on Escape key
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    document.addEventListener('keydown', e => { 
+        if (e.key === 'Escape') {
+            closeModal();
+            closeSidePanel();
+        }
+    });
+    
+    // ========== DEEP DIVE SIDE PANEL ==========
+    
+    let currentDeepDiveData = null;
+    
+    async function openDeepDive(ip) {
+        const panel = document.getElementById('deep-dive-panel');
+        const overlay = document.getElementById('side-panel-overlay');
+        const body = document.getElementById('deep-dive-body');
+        
+        // Show panel with loading state
+        panel.classList.add('active');
+        overlay.classList.add('active');
+        document.getElementById('deep-dive-ip').textContent = ip;
+        body.innerHTML = '<div class="loading-spinner">🔍 Fetching intel for ' + ip + '...</div>';
+        
+        try {
+            const resp = await fetch('/api/host/' + ip + '/deepdive');
+            const data = await resp.json();
+            
+            if (data.error) {
+                body.innerHTML = '<div class="empty">❌ ' + data.error + '</div>';
+                return;
+            }
+            
+            currentDeepDiveData = data;
+            renderDeepDive(data);
+        } catch (err) {
+            body.innerHTML = '<div class="empty">❌ Failed to fetch data: ' + err.message + '</div>';
+        }
+    }
+    
+    function renderDeepDive(data) {
+        const body = document.getElementById('deep-dive-body');
+        
+        let html = '';
+        
+        // Basic Info Section
+        html += '<div class="deep-dive-section">';
+        html += '<h4>📍 Basic Info</h4>';
+        html += '<div class="deep-dive-row"><span class="label">IP Address</span><span class="value">' + data.ip + '</span></div>';
+        html += '<div class="deep-dive-row"><span class="label">ASN</span><span class="value">' + (data.asn?.name || 'Unknown') + '</span></div>';
+        html += '<div class="deep-dive-row"><span class="label">ASN Number</span><span class="value">AS' + (data.asn?.asn || '?') + '</span></div>';
+        html += '<div class="deep-dive-row"><span class="label">Location</span><span class="value">' + (data.location?.city || '?') + ', ' + (data.location?.country || '?') + '</span></div>';
+        if (data.jarm) {
+            html += '<div class="deep-dive-row"><span class="label">JARM</span></div>';
+            html += '<div class="jarm-display">' + data.jarm + '</div>';
+        }
+        html += '</div>';
+        
+        // Pattern Matches Section
+        if (data.patterns && data.patterns.length > 0) {
+            html += '<div class="deep-dive-section">';
+            html += '<h4>🎯 Pattern Matches</h4>';
+            data.patterns.forEach(p => {
+                html += '<div class="deep-dive-row"><span class="label">' + p.name + '</span><span class="value danger">' + p.matched_at + '</span></div>';
+            });
+            html += '</div>';
+        }
+        
+        // Services Section
+        if (data.services && data.services.length > 0) {
+            html += '<div class="deep-dive-section">';
+            html += '<h4>🔌 Services (' + data.services.length + ')</h4>';
+            data.services.forEach(svc => {
+                html += '<div class="service-card">';
+                html += '<div class="service-card-header">';
+                html += '<span class="service-port">:' + svc.port + '</span>';
+                html += '<span class="service-proto">' + (svc.protocol || 'TCP') + '</span>';
+                html += '</div>';
+                html += '<div class="service-details">';
+                if (svc.service_name) html += '<div>Service: <code>' + svc.service_name + '</code></div>';
+                if (svc.product) html += '<div>Product: <code>' + svc.product + '</code></div>';
+                if (svc.banner) html += '<div>Banner: <code>' + svc.banner.substring(0, 80) + (svc.banner.length > 80 ? '...' : '') + '</code></div>';
+                if (svc.tls_subject) html += '<div>TLS: <code>' + svc.tls_subject + '</code></div>';
+                if (svc.http_title) html += '<div>Title: <code>' + svc.http_title + '</code></div>';
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        
+        // Timeline Section
+        if (data.timeline && data.timeline.length > 0) {
+            html += '<div class="deep-dive-section">';
+            html += '<h4>📅 Timeline</h4>';
+            html += '<div class="deep-dive-row"><span class="label">First Seen</span><span class="value">' + (data.first_seen || 'Unknown') + '</span></div>';
+            html += '<div class="deep-dive-row"><span class="label">Last Seen</span><span class="value">' + (data.last_seen || 'Unknown') + '</span></div>';
+            html += '</div>';
+        }
+        
+        // Risk Assessment
+        html += '<div class="deep-dive-section">';
+        html += '<h4>⚠️ Risk Assessment</h4>';
+        const riskClass = data.risk_level === 'high' ? 'danger' : (data.risk_level === 'medium' ? 'warn' : 'safe');
+        html += '<div class="deep-dive-row"><span class="label">Risk Level</span><span class="value ' + riskClass + '">' + (data.risk_level || 'Unknown').toUpperCase() + '</span></div>';
+        if (data.risk_factors && data.risk_factors.length > 0) {
+            data.risk_factors.forEach(rf => {
+                html += '<div class="deep-dive-row"><span class="label">• ' + rf + '</span></div>';
+            });
+        }
+        html += '</div>';
+        
+        body.innerHTML = html;
+    }
+    
+    function closeSidePanel() {
+        document.getElementById('deep-dive-panel').classList.remove('active');
+        document.getElementById('side-panel-overlay').classList.remove('active');
+        currentDeepDiveData = null;
+    }
+    
+    function downloadDeepDive() {
+        if (!currentDeepDiveData) return;
+        
+        const blob = new Blob([JSON.stringify(currentDeepDiveData, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'deepdive-' + currentDeepDiveData.ip + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
     
     // Initial load
     loadData();
     </script>
+    
+    <!-- Deep Dive Side Panel -->
+    <div class="side-panel-overlay" id="side-panel-overlay" onclick="closeSidePanel()"></div>
+    <div class="side-panel" id="deep-dive-panel">
+        <div class="side-panel-header">
+            <h3>🔍 Deep Dive: <span id="deep-dive-ip"></span></h3>
+            <button class="side-panel-close" onclick="closeSidePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="deep-dive-body">
+            <!-- Content loaded dynamically -->
+        </div>
+        <div class="side-panel-actions">
+            <button onclick="downloadDeepDive()" class="primary">📥 Download JSON</button>
+            <button onclick="closeSidePanel()">Close</button>
+        </div>
+    </div>
 </body>
 </html>
 '''
@@ -951,6 +1239,173 @@ def api_pattern_hosts():
         'hosts': hosts,
         'count': len(hosts)
     })
+
+
+@app.route('/api/host/<ip>/deepdive')
+def api_host_deepdive(ip):
+    """Get deep dive intel for a specific host IP."""
+    import subprocess
+    import re
+    
+    db = get_db()
+    cur = db.cursor()
+    
+    # Get host from our database
+    cur.execute("""
+        SELECT h.id, h.ip, h.country, h.asn_name, h.jarm, h.ports, h.first_seen, h.last_seen
+        FROM hosts h WHERE h.ip = ?
+    """, (ip,))
+    row = cur.fetchone()
+    
+    if not row:
+        db.close()
+        return jsonify({'error': 'Host not found in database', 'ip': ip})
+    
+    host_id, ip, country, asn_name, jarm, ports, first_seen, last_seen = row
+    
+    # Get pattern matches
+    cur.execute("""
+        SELECT p.name, p.pattern_type, m.matched_at
+        FROM matches m
+        JOIN patterns p ON m.pattern_id = p.id
+        WHERE m.host_id = ?
+        ORDER BY m.matched_at DESC
+    """, (host_id,))
+    patterns = [{'name': r[0], 'type': r[1], 'matched_at': r[2]} for r in cur.fetchall()]
+    db.close()
+    
+    # Build response
+    result = {
+        'ip': ip,
+        'country': country,
+        'asn': {'name': asn_name},
+        'jarm': jarm,
+        'first_seen': first_seen,
+        'last_seen': last_seen,
+        'patterns': patterns,
+        'services': [],
+        'location': {'country': country},
+        'risk_level': 'unknown',
+        'risk_factors': []
+    }
+    
+    # Try to get Censys data
+    try:
+        censys_token = os.environ.get('CENSYS_API_TOKEN') or os.environ.get('CENSYS_API_KEY')
+        if censys_token:
+            import urllib.request
+            import urllib.error
+            
+            url = f'https://search.censys.io/api/v2/hosts/{ip}'
+            req = urllib.request.Request(url)
+            req.add_header('Authorization', f'Bearer {censys_token}')
+            req.add_header('Accept', 'application/json')
+            
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    censys_data = json.loads(resp.read().decode())
+                    host_data = censys_data.get('result', {})
+                    
+                    # Extract ASN info
+                    if 'autonomous_system' in host_data:
+                        asn_info = host_data['autonomous_system']
+                        result['asn'] = {
+                            'asn': asn_info.get('asn'),
+                            'name': asn_info.get('name') or asn_info.get('description'),
+                            'bgp_prefix': asn_info.get('bgp_prefix')
+                        }
+                    
+                    # Extract location
+                    if 'location' in host_data:
+                        loc = host_data['location']
+                        result['location'] = {
+                            'city': loc.get('city'),
+                            'province': loc.get('province'),
+                            'country': loc.get('country'),
+                            'timezone': loc.get('timezone'),
+                            'coordinates': loc.get('coordinates')
+                        }
+                    
+                    # Extract services
+                    services = []
+                    for svc in host_data.get('services', []):
+                        service_info = {
+                            'port': svc.get('port'),
+                            'protocol': svc.get('transport_protocol', 'tcp').upper(),
+                            'service_name': svc.get('service_name') or svc.get('protocol'),
+                        }
+                        
+                        # Get banner
+                        if svc.get('banner'):
+                            service_info['banner'] = svc['banner'][:200]
+                        
+                        # Get software/product info
+                        if svc.get('software'):
+                            sw = svc['software'][0] if isinstance(svc['software'], list) else svc['software']
+                            if isinstance(sw, dict):
+                                service_info['product'] = sw.get('product') or sw.get('vendor')
+                        
+                        # SSH specific
+                        if svc.get('ssh', {}).get('endpoint_id', {}).get('software_version'):
+                            service_info['product'] = svc['ssh']['endpoint_id']['software_version']
+                        
+                        # HTTP specific
+                        if svc.get('http', {}).get('response', {}).get('html_title'):
+                            service_info['http_title'] = svc['http']['response']['html_title']
+                        
+                        # TLS specific
+                        if svc.get('tls', {}).get('certificates', {}).get('leaf_data', {}).get('subject_dn'):
+                            service_info['tls_subject'] = svc['tls']['certificates']['leaf_data']['subject_dn']
+                        
+                        services.append(service_info)
+                    
+                    result['services'] = services
+                    
+            except urllib.error.HTTPError as e:
+                result['censys_error'] = f'HTTP {e.code}'
+            except Exception as e:
+                result['censys_error'] = str(e)
+    except Exception as e:
+        result['censys_error'] = str(e)
+    
+    # Calculate risk level
+    risk_factors = []
+    risk_score = 0
+    
+    if patterns:
+        risk_score += 30
+        for p in patterns:
+            if 'cobalt' in p['name'].lower():
+                risk_factors.append('Cobalt Strike JARM signature match')
+                risk_score += 40
+            elif 'sliver' in p['name'].lower() or 'mythic' in p['name'].lower():
+                risk_factors.append(f'{p["name"]} C2 framework signature')
+                risk_score += 35
+            else:
+                risk_factors.append(f'Pattern match: {p["name"]}')
+                risk_score += 20
+    
+    # Check for concerning services
+    for svc in result.get('services', []):
+        product = (svc.get('product') or '').lower()
+        if 'goanywhere' in product:
+            risk_factors.append('GoAnywhere MFT detected (CVE-2023-0669 target)')
+            risk_score += 25
+        if svc.get('port') in [4444, 5555, 8443, 50050]:
+            risk_factors.append(f'Suspicious port {svc["port"]} open')
+            risk_score += 15
+    
+    if risk_score >= 60:
+        result['risk_level'] = 'high'
+    elif risk_score >= 30:
+        result['risk_level'] = 'medium'
+    else:
+        result['risk_level'] = 'low'
+    
+    result['risk_factors'] = risk_factors
+    result['risk_score'] = risk_score
+    
+    return jsonify(result)
 
 
 @app.route('/api/pattern/<int:pattern_id>/stix')
