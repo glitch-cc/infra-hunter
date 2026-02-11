@@ -468,6 +468,62 @@ TEMPLATE = '''
             z-index: 1000;
         }
         .side-panel-overlay.active { display: block; }
+        
+        /* Contact Cards */
+        .contact-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .contact-card.security { border-left: 3px solid #3fb950; }
+        .contact-card .contact-name {
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+        .contact-card .contact-title {
+            font-size: 0.85em;
+            color: #8b949e;
+            margin: 4px 0;
+        }
+        .contact-card .contact-email {
+            font-family: monospace;
+            color: #79c0ff;
+            font-size: 0.9em;
+        }
+        .contact-card .contact-source {
+            font-size: 0.75em;
+            color: #8b949e;
+            float: right;
+        }
+        .contact-card .contact-actions {
+            margin-top: 8px;
+        }
+        .contact-card .contact-actions a {
+            font-size: 0.8em;
+            color: #58a6ff;
+            margin-right: 12px;
+            text-decoration: none;
+        }
+        .contact-card .contact-actions a:hover { text-decoration: underline; }
+        
+        .standard-emails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .standard-email {
+            background: #21262d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #79c0ff;
+            cursor: pointer;
+        }
+        .standard-email:hover { background: #30363d; }
     </style>
 </head>
 <body>
@@ -991,6 +1047,110 @@ TEMPLATE = '''
         URL.revokeObjectURL(url);
     }
     
+    async function findContacts() {
+        if (!currentDeepDiveData || !currentDeepDiveData.asn) return;
+        
+        const orgName = currentDeepDiveData.asn.name || currentDeepDiveData.asn;
+        if (!orgName) {
+            alert('No organization name available');
+            return;
+        }
+        
+        const btn = document.getElementById('find-contacts-btn');
+        btn.textContent = '🔄 Searching...';
+        btn.disabled = true;
+        
+        try {
+            const resp = await fetch('api/org/' + encodeURIComponent(orgName) + '/contacts');
+            const data = await resp.json();
+            
+            // Add contacts to deep dive data
+            currentDeepDiveData.contacts = data;
+            
+            // Render contacts section
+            let html = '<div class="deep-dive-section"><h4>📇 Security Contacts</h4>';
+            
+            if (data.error) {
+                html += '<p style="color:#f85149;">' + data.error + '</p>';
+            } else {
+                // Domain and email pattern
+                if (data.domain) {
+                    html += '<div class="deep-dive-row"><span class="label">Domain</span><span class="value">' + data.domain + '</span></div>';
+                }
+                if (data.email_pattern) {
+                    html += '<div class="deep-dive-row"><span class="label">Email Pattern</span><span class="value">' + data.email_pattern + '</span></div>';
+                }
+                
+                // Standard security emails
+                if (data.standard_emails && data.standard_emails.length > 0) {
+                    html += '<div style="margin:12px 0;"><span class="label">Standard Security Emails:</span>';
+                    html += '<div class="standard-emails">';
+                    data.standard_emails.forEach(e => {
+                        html += '<span class="standard-email" onclick="copyToClipboard(\'' + e.email + '\')" title="Click to copy">' + e.email + '</span>';
+                    });
+                    html += '</div></div>';
+                }
+                
+                // Security contacts
+                const securityContacts = (data.contacts || []).filter(c => c.is_security_role);
+                if (securityContacts.length > 0) {
+                    html += '<div style="margin-top:15px;"><span class="label">Security/IR Contacts (' + securityContacts.length + '):</span></div>';
+                    securityContacts.forEach(c => {
+                        html += '<div class="contact-card security">';
+                        html += '<span class="contact-source">' + (c.source || '') + '</span>';
+                        html += '<div class="contact-name">' + (c.first_name || '') + ' ' + (c.last_name || '') + '</div>';
+                        html += '<div class="contact-title">' + (c.position || 'Unknown Role') + '</div>';
+                        html += '<div class="contact-email">' + (c.email || 'No email') + '</div>';
+                        if (c.linkedin || c.email) {
+                            html += '<div class="contact-actions">';
+                            if (c.email) html += '<a href="mailto:' + c.email + '">✉️ Email</a>';
+                            if (c.linkedin) html += '<a href="' + c.linkedin + '" target="_blank">🔗 LinkedIn</a>';
+                            html += '</div>';
+                        }
+                        html += '</div>';
+                    });
+                }
+                
+                // Other contacts (IT, etc)
+                const otherContacts = (data.contacts || []).filter(c => !c.is_security_role);
+                if (otherContacts.length > 0) {
+                    html += '<div style="margin-top:15px;"><span class="label">Other IT Contacts (' + otherContacts.length + '):</span></div>';
+                    otherContacts.slice(0, 5).forEach(c => {
+                        html += '<div class="contact-card">';
+                        html += '<span class="contact-source">' + (c.source || '') + '</span>';
+                        html += '<div class="contact-name">' + (c.first_name || '') + ' ' + (c.last_name || '') + '</div>';
+                        html += '<div class="contact-title">' + (c.position || 'Unknown Role') + '</div>';
+                        html += '<div class="contact-email">' + (c.email || 'No email') + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.total_contacts === 0 && (!data.standard_emails || data.standard_emails.length === 0)) {
+                    html += '<p style="color:#8b949e;">No contacts found</p>';
+                }
+            }
+            
+            html += '</div>';
+            
+            // Append to body
+            document.getElementById('deep-dive-body').innerHTML += html;
+            
+            btn.textContent = '✅ Contacts Found';
+            setTimeout(() => { btn.textContent = '🔍 Find Contacts'; btn.disabled = false; }, 2000);
+            
+        } catch (err) {
+            btn.textContent = '❌ Error';
+            setTimeout(() => { btn.textContent = '🔍 Find Contacts'; btn.disabled = false; }, 2000);
+            console.error('Contact search error:', err);
+        }
+    }
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Brief visual feedback could be added here
+        });
+    }
+    
     // Initial load
     loadData();
     </script>
@@ -1006,6 +1166,7 @@ TEMPLATE = '''
             <!-- Content loaded dynamically -->
         </div>
         <div class="side-panel-actions">
+            <button onclick="findContacts()" id="find-contacts-btn">🔍 Find Contacts</button>
             <button onclick="downloadDeepDive()" class="primary">📥 Download JSON</button>
             <button onclick="closeSidePanel()">Close</button>
         </div>
@@ -1416,6 +1577,155 @@ def api_host_deepdive(ip):
     
     result['risk_factors'] = risk_factors
     result['risk_score'] = risk_score
+    
+    return jsonify(result)
+
+
+@app.route('/api/org/<path:org_name>/contacts')
+def api_org_contacts(org_name):
+    """Find security/IT contacts for an organization."""
+    import requests as req
+    import re
+    
+    result = {
+        'organization': org_name,
+        'domain': None,
+        'contacts': [],
+        'standard_emails': [],
+        'email_pattern': None,
+    }
+    
+    # Get API keys from environment
+    hunter_key = os.environ.get('HUNTER_API_KEY')
+    apollo_key = os.environ.get('APOLLO_API_KEY')
+    
+    # Try to extract/guess domain from org name
+    # Common patterns: "Company Name" -> company.com, company.org, company.edu
+    org_lower = org_name.lower()
+    domain = None
+    
+    # Check for known patterns
+    if 'college' in org_lower or 'university' in org_lower or 'institute' in org_lower:
+        # Educational - try .edu
+        words = re.sub(r'[^a-z\s]', '', org_lower).split()
+        # Try abbreviation or key word
+        if 'baylor' in words:
+            domain = 'bcm.edu'  # Baylor College of Medicine
+    
+    # If no domain found, try Hunter domain search by company name
+    if not domain and hunter_key:
+        try:
+            resp = req.get(
+                'https://api.hunter.io/v2/domain-search',
+                params={'company': org_name, 'api_key': hunter_key},
+                timeout=15
+            )
+            if resp.ok:
+                data = resp.json().get('data', {})
+                domain = data.get('domain')
+                result['email_pattern'] = data.get('pattern')
+        except Exception as e:
+            result['hunter_error'] = str(e)
+    
+    if domain:
+        result['domain'] = domain
+        
+        # Generate standard security emails
+        result['standard_emails'] = [
+            {'email': f'abuse@{domain}', 'type': 'Standard', 'role': 'Abuse Contact'},
+            {'email': f'security@{domain}', 'type': 'Standard', 'role': 'Security Team'},
+            {'email': f'soc@{domain}', 'type': 'Standard', 'role': 'Security Operations'},
+            {'email': f'csirt@{domain}', 'type': 'Standard', 'role': 'Incident Response'},
+            {'email': f'infosec@{domain}', 'type': 'Standard', 'role': 'Information Security'},
+            {'email': f'it-security@{domain}', 'type': 'Standard', 'role': 'IT Security'},
+        ]
+        
+        # Search Hunter.io for actual contacts
+        if hunter_key:
+            try:
+                resp = req.get(
+                    'https://api.hunter.io/v2/domain-search',
+                    params={'domain': domain, 'api_key': hunter_key, 'limit': 20},
+                    timeout=15
+                )
+                if resp.ok:
+                    data = resp.json().get('data', {})
+                    result['email_pattern'] = data.get('pattern')
+                    result['organization'] = data.get('organization') or org_name
+                    
+                    # Filter for security/IT roles
+                    security_keywords = ['security', 'ciso', 'cso', 'infosec', 'cyber', 
+                                        'incident', 'soc', 'threat', 'vulnerability',
+                                        'it director', 'it manager', 'cto', 'cio',
+                                        'information security', 'network security']
+                    
+                    for email in data.get('emails', []):
+                        position = (email.get('position') or '').lower()
+                        # Check if security/IT related
+                        is_security = any(kw in position for kw in security_keywords)
+                        
+                        contact = {
+                            'email': email.get('value'),
+                            'first_name': email.get('first_name'),
+                            'last_name': email.get('last_name'),
+                            'position': email.get('position'),
+                            'confidence': email.get('confidence'),
+                            'linkedin': email.get('linkedin'),
+                            'is_security_role': is_security,
+                            'source': 'Hunter.io'
+                        }
+                        result['contacts'].append(contact)
+                    
+                    # Sort: security roles first, then by confidence
+                    result['contacts'].sort(
+                        key=lambda x: (not x.get('is_security_role', False), -(x.get('confidence') or 0))
+                    )
+            except Exception as e:
+                result['hunter_error'] = str(e)
+        
+        # Search Apollo for security titles
+        if apollo_key:
+            try:
+                # Search for people with security titles at this company
+                resp = req.post(
+                    'https://api.apollo.io/api/v1/mixed_people/search',
+                    headers={'X-Api-Key': apollo_key, 'Content-Type': 'application/json'},
+                    json={
+                        'organization_domains': [domain],
+                        'person_titles': ['CISO', 'CSO', 'Chief Security Officer', 
+                                         'Chief Information Security Officer',
+                                         'VP Security', 'Director of Security',
+                                         'Security Director', 'IT Director',
+                                         'Information Security Manager',
+                                         'Security Operations Manager'],
+                        'per_page': 10
+                    },
+                    timeout=15
+                )
+                if resp.ok:
+                    people = resp.json().get('people', [])
+                    for person in people:
+                        # Check if we already have this email
+                        email = person.get('email')
+                        if email and not any(c.get('email') == email for c in result['contacts']):
+                            contact = {
+                                'email': email,
+                                'first_name': person.get('first_name'),
+                                'last_name': person.get('last_name'),
+                                'position': person.get('title'),
+                                'linkedin': person.get('linkedin_url'),
+                                'is_security_role': True,
+                                'source': 'Apollo'
+                            }
+                            result['contacts'].insert(0, contact)  # Add at top
+            except Exception as e:
+                result['apollo_error'] = str(e)
+    else:
+        result['error'] = 'Could not determine domain for organization'
+    
+    # Count security vs other contacts
+    result['security_contacts'] = len([c for c in result['contacts'] if c.get('is_security_role')])
+    result['total_contacts'] = len(result['contacts'])
     
     return jsonify(result)
 
