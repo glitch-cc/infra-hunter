@@ -1593,11 +1593,13 @@ def api_org_contacts(org_name):
         'contacts': [],
         'standard_emails': [],
         'email_pattern': None,
+        'linkedin_company': None,
     }
     
     # Get API keys from environment
     hunter_key = os.environ.get('HUNTER_API_KEY')
     apollo_key = os.environ.get('APOLLO_API_KEY')
+    rapidapi_key = os.environ.get('RAPIDAPI_KEY')
     
     # Try to extract/guess domain from org name
     # Common patterns: "Company Name" -> company.com, company.org, company.edu
@@ -1720,6 +1722,70 @@ def api_org_contacts(org_name):
                             result['contacts'].insert(0, contact)  # Add at top
             except Exception as e:
                 result['apollo_error'] = str(e)
+        
+        # LinkedIn employee search via RapidAPI
+        if rapidapi_key:
+            try:
+                # First get company LinkedIn URL
+                company_resp = req.get(
+                    f'https://fresh-linkedin-profile-data.p.rapidapi.com/get-company-by-domain?domain={domain}',
+                    headers={
+                        'x-rapidapi-key': rapidapi_key,
+                        'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com'
+                    },
+                    timeout=15
+                )
+                
+                if company_resp.ok:
+                    company_data = company_resp.json().get('data', {})
+                    result['linkedin_company'] = {
+                        'name': company_data.get('company_name'),
+                        'url': company_data.get('linkedin_url'),
+                        'employees': company_data.get('employee_count'),
+                        'industry': company_data.get('industry')
+                    }
+                    
+                    # Search for security employees
+                    linkedin_url = company_data.get('linkedin_url')
+                    if linkedin_url:
+                        for role in ['CISO', 'Chief Information Security', 'Security Director', 
+                                    'Information Security', 'Incident Response', 'Security Operations']:
+                            try:
+                                emp_resp = req.post(
+                                    'https://fresh-linkedin-profile-data.p.rapidapi.com/search-employees',
+                                    headers={
+                                        'x-rapidapi-key': rapidapi_key,
+                                        'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    json={
+                                        'company_linkedin_url': linkedin_url,
+                                        'keyword': role,
+                                        'page': 1
+                                    },
+                                    timeout=20
+                                )
+                                
+                                if emp_resp.ok:
+                                    employees = emp_resp.json().get('data', [])
+                                    for emp in employees[:3]:  # Top 3 per role
+                                        # Check if already have this person
+                                        emp_linkedin = emp.get('linkedin_url')
+                                        if emp_linkedin and not any(c.get('linkedin') == emp_linkedin for c in result['contacts']):
+                                            contact = {
+                                                'first_name': emp.get('first_name'),
+                                                'last_name': emp.get('last_name'),
+                                                'position': emp.get('title'),
+                                                'linkedin': emp_linkedin,
+                                                'is_security_role': True,
+                                                'source': 'LinkedIn',
+                                                'profile_picture': emp.get('profile_picture')
+                                            }
+                                            result['contacts'].insert(0, contact)
+                            except:
+                                pass  # Continue with next role
+            except Exception as e:
+                result['linkedin_error'] = str(e)
     else:
         result['error'] = 'Could not determine domain for organization'
     
